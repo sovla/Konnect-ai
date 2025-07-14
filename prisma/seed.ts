@@ -5,6 +5,8 @@ import {
   RecommendationType,
   Impact,
   VehicleType,
+  Theme,
+  Language,
   type Prisma,
 } from '../app/generated/prisma';
 
@@ -35,6 +37,33 @@ async function main() {
           vehicleType: VehicleType.MOTORCYCLE,
           isOnline: true,
           onlineTime: 510, // 8시간 30분 = 510분
+          // 운행 관련 설정
+          minOrderAmount: 5000,
+          workingHours: { start: 8, end: 22 },
+          maxDistance: 12,
+          autoAccept: false,
+          // 알림 설정
+          pushNewOrder: true,
+          pushGoalAchieve: true,
+          pushPromotion: true,
+          emailSummary: true,
+          emailMarketing: false,
+          // UserSettings 관계
+          userSettings: {
+            create: {
+              theme: Theme.LIGHT,
+              language: Language.KOREAN,
+              mapDefaultZoom: 13,
+              mapDefaultLat: 35.1595, // 부산 위도
+              mapDefaultLng: 129.0756, // 부산 경도
+              mapTrafficLayer: true,
+              mapTransitLayer: false,
+              privacyAccepted: true,
+              termsAccepted: true,
+              privacyDate: new Date('2024-07-01'),
+              termsDate: new Date('2024-07-01'),
+            },
+          },
         },
       },
     },

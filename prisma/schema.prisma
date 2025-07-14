@@ -78,10 +78,22 @@ model RiderProfile {
   vehicleType     VehicleType @default(MOTORCYCLE)
   isOnline        Boolean     @default(false)
   onlineTime      Int         @default(0)
+  // 운행 관련 설정
+  minOrderAmount  Int         @default(0)        // 최소 주문 금액
+  workingHours    Json        @default("{\"start\": 9, \"end\": 22}")  // 선호 운행 시간대
+  maxDistance     Int         @default(10)       // 최대 배달 거리 (km)
+  autoAccept      Boolean     @default(false)    // 자동 주문 수락
+  // 알림 설정
+  pushNewOrder    Boolean     @default(true)     // 새 주문 푸시 알림
+  pushGoalAchieve Boolean     @default(true)     // 목표 달성 푸시 알림
+  pushPromotion   Boolean     @default(true)     // 프로모션 푸시 알림
+  emailSummary    Boolean     @default(true)     // 일일/주간 요약 이메일
+  emailMarketing  Boolean     @default(false)    // 마케팅 이메일
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   deliveries      Delivery[]
   user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userSettings    UserSettings?
 
   @@map("rider_profiles")
 }
@@ -196,6 +208,30 @@ model PlatformStats {
   @@map("platform_stats")
 }
 
+model UserSettings {
+  id                String       @id @default(cuid())
+  riderProfileId    String       @unique
+  // 앱 환경 설정
+  theme             Theme        @default(LIGHT)       // 테마 설정
+  language          Language     @default(KOREAN)      // 언어 설정
+  // 지도 설정
+  mapDefaultZoom    Int          @default(12)          // 기본 줌 레벨
+  mapDefaultLat     Float        @default(37.5665)     // 기본 중심점 위도 (서울)
+  mapDefaultLng     Float        @default(126.9780)    // 기본 중심점 경도 (서울)
+  mapTrafficLayer   Boolean      @default(true)        // 교통정보 레이어 표시
+  mapTransitLayer   Boolean      @default(false)       // 대중교통 레이어 표시
+  // 개인정보 및 약관
+  privacyAccepted   Boolean      @default(false)       // 개인정보 처리방침 동의
+  termsAccepted     Boolean      @default(false)       // 이용약관 동의
+  privacyDate       DateTime?                          // 개인정보 동의 일시
+  termsDate         DateTime?                          // 약관 동의 일시
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  riderProfile      RiderProfile @relation(fields: [riderProfileId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}
+
 enum VehicleType {
   MOTORCYCLE
   BICYCLE
@@ -236,4 +272,19 @@ enum Impact {
   LOW
 
   @@map("impact")
+}
+
+enum Theme {
+  LIGHT
+  DARK
+  SYSTEM
+
+  @@map("theme")
+}
+
+enum Language {
+  KOREAN
+  ENGLISH
+
+  @@map("language")
 }
