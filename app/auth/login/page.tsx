@@ -5,21 +5,31 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
 import { signIn } from 'next-auth/react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 
-import { LoginFormData, FormErrors } from '@/app/types';
-import { validateEmail, validatePassword, validateRequired } from '@/app/utils';
+import { loginSchema, type LoginFormData } from '@/app/lib/schemas';
 import { RedirectIfAuthenticated } from '@/app/components';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState<LoginFormData>({
-    email: '',
-    password: '',
-  });
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
+  // React Hook Form 설정
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setError,
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    mode: 'onChange',
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
   // URL 파라미터에서 회원가입 성공 메시지 확인
   useEffect(() => {
@@ -31,56 +41,19 @@ export default function LoginPage() {
     }
   }, []);
 
-  // 폼 데이터 변경 핸들러
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-
-    // 실시간 에러 제거
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: '' }));
-    }
-  };
-
-  // 폼 검증
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
-
-    if (!validateRequired(formData.email)) {
-      newErrors.email = '이메일을 입력해주세요.';
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = '올바른 이메일 형식을 입력해주세요.';
-    }
-
-    if (!validateRequired(formData.password)) {
-      newErrors.password = '비밀번호를 입력해주세요.';
-    } else if (!validatePassword(formData.password)) {
-      newErrors.password = '비밀번호는 최소 6자 이상이어야 합니다.';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   // 로그인 제출
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
-    setIsLoading(true);
-
+  const onSubmit = async (data: LoginFormData) => {
     try {
       const result = await signIn('credentials', {
-        email: formData.email,
-        password: formData.password,
+        email: data.email,
+        password: data.password,
         redirect: false,
       });
 
       if (result?.error) {
-        setErrors({ general: '이메일 또는 비밀번호가 올바르지 않습니다.' });
+        setError('root', {
+          message: '이메일 또는 비밀번호가 올바르지 않습니다.',
+        });
       } else {
         // 로그인 성공
         router.push('/');
@@ -88,9 +61,9 @@ export default function LoginPage() {
       }
     } catch (error) {
       console.error('로그인 에러:', error);
-      setErrors({ general: '로그인 중 오류가 발생했습니다.' });
-    } finally {
-      setIsLoading(false);
+      setError('root', {
+        message: '로그인 중 오류가 발생했습니다.',
+      });
     }
   };
 
@@ -118,13 +91,13 @@ export default function LoginPage() {
             )}
 
             {/* 에러 메시지 */}
-            {errors.general && (
+            {errors.root && (
               <div className="mb-6 p-4 border border-red-200 bg-red-50 rounded-lg">
-                <p className="text-sm text-red-600">{errors.general}</p>
+                <p className="text-sm text-red-600">{errors.root.message}</p>
               </div>
             )}
 
-            <form className="space-y-6" onSubmit={handleSubmit}>
+            <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
               {/* 이메일 입력 */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -135,20 +108,17 @@ export default function LoginPage() {
                     <Mail className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
+                    {...register('email')}
                     id="email"
-                    name="email"
                     type="email"
                     autoComplete="email"
-                    required
-                    value={formData.email}
-                    onChange={handleChange}
                     className={`appearance-none block w-full pl-10 pr-3 py-3 border ${
                       errors.email ? 'border-red-300' : 'border-gray-300'
                     } rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
                     placeholder="이메일을 입력하세요"
                   />
                 </div>
-                {errors.email && <p className="mt-2 text-sm text-red-600">{errors.email}</p>}
+                {errors.email && <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>}
               </div>
 
               {/* 비밀번호 입력 */}
@@ -161,47 +131,30 @@ export default function LoginPage() {
                     <Lock className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
+                    {...register('password')}
                     id="password"
-                    name="password"
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="current-password"
-                    required
-                    value={formData.password}
-                    onChange={handleChange}
                     className={`appearance-none block w-full pl-10 pr-10 py-3 border ${
                       errors.password ? 'border-red-300' : 'border-gray-300'
                     } rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
                     placeholder="비밀번호를 입력하세요"
                   />
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                    ) : (
-                      <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                    )}
-                  </button>
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-600 transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
                 </div>
-                {errors.password && <p className="mt-2 text-sm text-red-600">{errors.password}</p>}
+                {errors.password && <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>}
               </div>
 
-              {/* 옵션 */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <input
-                    id="remember-me"
-                    name="remember-me"
-                    type="checkbox"
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                    로그인 상태 유지
-                  </label>
-                </div>
-
+              {/* 비밀번호 찾기 링크 */}
+              <div className="flex items-center justify-end">
                 <div className="text-sm">
                   <Link
                     href="/auth/reset-password"
@@ -216,39 +169,17 @@ export default function LoginPage() {
               <div>
                 <button
                   type="submit"
-                  disabled={isLoading}
-                  className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  disabled={isSubmitting}
+                  className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white ${
+                    isSubmitting
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+                  } transition-colors`}
                 >
-                  {isLoading ? (
-                    <>
-                      <svg
-                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      로그인 중...
-                    </>
-                  ) : (
-                    <>
-                      <LogIn className="w-5 h-5 mr-2" />
-                      로그인
-                    </>
-                  )}
+                  <span className="absolute left-0 inset-y-0 flex items-center pl-3">
+                    <LogIn className="h-5 w-5 text-blue-500 group-hover:text-blue-400" />
+                  </span>
+                  {isSubmitting ? '로그인 중...' : '로그인'}
                 </button>
               </div>
 

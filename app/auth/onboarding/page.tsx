@@ -3,29 +3,34 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MapPin, Target, Bike, CheckCircle, ArrowRight } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 
+import { onboardingSchema, type OnboardingFormData } from '@/app/lib/schemas';
 import { ProtectedRoute } from '@/app/components';
-
-interface OnboardingFormData {
-  preferredAreas: string[];
-  vehicleType: 'MOTORCYCLE' | 'BICYCLE' | 'CAR';
-  dailyGoal: number;
-}
-
-interface FormErrors {
-  [key: string]: string;
-}
 
 function OnboardingContent() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState<OnboardingFormData>({
-    preferredAreas: [],
-    vehicleType: 'MOTORCYCLE',
-    dailyGoal: 50000,
+
+  // React Hook Form 설정
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setError,
+    watch,
+    setValue,
+    getValues,
+  } = useForm<OnboardingFormData>({
+    resolver: zodResolver(onboardingSchema),
+    mode: 'onChange',
+    defaultValues: {
+      preferredAreas: [],
+      vehicleType: 'MOTORCYCLE',
+      dailyGoal: 50000,
+    },
   });
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [isLoading, setIsLoading] = useState(false);
 
   const steps = [
     {
@@ -82,70 +87,40 @@ function OnboardingContent() {
     { value: 'CAR', label: '자동차', icon: '🚗', description: '날씨에 관계없이 안전하게 배달할 수 있습니다' },
   ];
 
-  const handleAreaToggle = (area: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      preferredAreas: prev.preferredAreas.includes(area)
-        ? prev.preferredAreas.filter((a) => a !== area)
-        : [...prev.preferredAreas, area],
-    }));
-
-    if (errors.preferredAreas) {
-      setErrors((prev) => ({ ...prev, preferredAreas: '' }));
-    }
+  // 지역 선택 토글
+  const toggleArea = (area: string) => {
+    const currentAreas = getValues('preferredAreas');
+    const newAreas = currentAreas.includes(area) ? currentAreas.filter((a) => a !== area) : [...currentAreas, area];
+    setValue('preferredAreas', newAreas);
   };
 
-  const handleVehicleSelect = (vehicleType: 'MOTORCYCLE' | 'BICYCLE' | 'CAR') => {
-    setFormData((prev) => ({ ...prev, vehicleType }));
-  };
-
-  const handleGoalChange = (goal: number) => {
-    setFormData((prev) => ({ ...prev, dailyGoal: goal }));
-  };
-
-  const validateCurrentStep = (): boolean => {
-    const newErrors: FormErrors = {};
-
-    if (currentStep === 1 && formData.preferredAreas.length === 0) {
-      newErrors.preferredAreas = '최소 하나의 지역을 선택해주세요.';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
+  // 다음 단계로 이동
   const handleNext = () => {
-    if (validateCurrentStep()) {
-      if (currentStep < steps.length) {
-        setCurrentStep(currentStep + 1);
-      } else {
-        handleSubmit();
-      }
-    }
+    setCurrentStep((prev) => Math.min(prev + 1, steps.length));
   };
 
-  const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
+  // 이전 단계로 이동
+  const handlePrev = () => {
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
-  const handleSubmit = async () => {
-    setIsLoading(true);
-
+  // 온보딩 완료 제출
+  const onSubmit = async (data: OnboardingFormData) => {
     try {
       const response = await fetch('/api/auth/onboarding', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(data),
       });
 
-      const data = await response.json();
+      const result = await response.json();
 
       if (!response.ok) {
-        setErrors({ general: data.error || '온보딩 완료 중 오류가 발생했습니다.' });
+        setError('root', {
+          message: result.error || '온보딩 완료 중 오류가 발생했습니다.',
+        });
         return;
       }
 
@@ -153,9 +128,9 @@ function OnboardingContent() {
       router.push('/?onboarding=completed');
     } catch (error) {
       console.error('온보딩 에러:', error);
-      setErrors({ general: '온보딩 완료 중 오류가 발생했습니다.' });
-    } finally {
-      setIsLoading(false);
+      setError('root', {
+        message: '온보딩 완료 중 오류가 발생했습니다.',
+      });
     }
   };
 
@@ -163,109 +138,86 @@ function OnboardingContent() {
     switch (currentStep) {
       case 1:
         return (
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">주로 활동하실 지역을 선택해주세요</h3>
-            <p className="text-sm text-gray-600 mb-6">
-              여러 지역을 선택할 수 있습니다. AI가 선택하신 지역의 데이터를 기반으로 맞춤형 추천을 제공합니다.
-            </p>
-            {errors.preferredAreas && (
-              <div className="mb-4 p-3 border border-red-200 bg-red-50 rounded-lg">
-                <p className="text-sm text-red-600">{errors.preferredAreas}</p>
-              </div>
-            )}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-60 overflow-y-auto">
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
               {seoulDistricts.map((district) => (
                 <button
                   key={district}
                   type="button"
-                  onClick={() => handleAreaToggle(district)}
+                  onClick={() => toggleArea(district)}
                   className={`p-3 text-sm border rounded-lg transition-colors ${
-                    formData.preferredAreas.includes(district)
+                    watch('preferredAreas').includes(district)
                       ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-gray-300 hover:border-gray-400 text-gray-700'
+                      : 'border-gray-300 hover:border-gray-400'
                   }`}
                 >
                   {district}
                 </button>
               ))}
             </div>
-            <div className="mt-4">
-              <p className="text-sm text-gray-500">선택된 지역: {formData.preferredAreas.length}개</p>
-            </div>
+            {errors.preferredAreas && <p className="text-sm text-red-600">{errors.preferredAreas.message}</p>}
+            <p className="text-sm text-gray-500">선택된 지역: {watch('preferredAreas').length}개</p>
           </div>
         );
 
       case 2:
         return (
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">주요 운송 수단을 선택해주세요</h3>
-            <p className="text-sm text-gray-600 mb-6">
-              가장 자주 사용하실 운송 수단을 선택해주세요. 나중에 설정에서 변경할 수 있습니다.
-            </p>
-            <div className="space-y-3">
-              {vehicleOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => handleVehicleSelect(option.value as 'MOTORCYCLE' | 'BICYCLE' | 'CAR')}
-                  className={`w-full p-4 border rounded-lg text-left transition-colors ${
-                    formData.vehicleType === option.value
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-300 hover:border-gray-400'
-                  }`}
-                >
-                  <div className="flex items-center">
-                    <span className="text-2xl mr-3">{option.icon}</span>
-                    <div>
-                      <h4 className="font-medium text-gray-900">{option.label}</h4>
-                      <p className="text-sm text-gray-600">{option.description}</p>
-                    </div>
-                    {formData.vehicleType === option.value && <CheckCircle className="w-5 h-5 text-blue-600 ml-auto" />}
+          <div className="space-y-4">
+            {vehicleOptions.map((option) => (
+              <label
+                key={option.value}
+                className={`block p-4 border rounded-lg cursor-pointer transition-colors ${
+                  watch('vehicleType') === option.value
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                <input {...register('vehicleType')} type="radio" value={option.value} className="sr-only" />
+                <div className="flex items-center">
+                  <span className="text-3xl mr-4">{option.icon}</span>
+                  <div>
+                    <div className="font-medium text-gray-900">{option.label}</div>
+                    <div className="text-sm text-gray-500">{option.description}</div>
                   </div>
-                </button>
-              ))}
-            </div>
+                </div>
+              </label>
+            ))}
           </div>
         );
 
       case 3:
         return (
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">일일 수익 목표를 설정해주세요</h3>
-            <p className="text-sm text-gray-600 mb-6">
-              목표 수익을 설정하면 AI가 목표 달성을 위한 맞춤형 추천을 제공합니다.
-            </p>
-            <div className="space-y-4">
-              {[30000, 50000, 70000, 100000].map((goal) => (
-                <button
-                  key={goal}
-                  type="button"
-                  onClick={() => handleGoalChange(goal)}
-                  className={`w-full p-4 border rounded-lg text-left transition-colors ${
-                    formData.dailyGoal === goal ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-gray-900">{goal.toLocaleString()}원</span>
-                    {formData.dailyGoal === goal && <CheckCircle className="w-5 h-5 text-blue-600" />}
-                  </div>
-                </button>
-              ))}
-              <div className="border border-gray-300 rounded-lg p-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">직접 입력</label>
+          <div className="space-y-6">
+            <div>
+              <label htmlFor="dailyGoal" className="block text-sm font-medium text-gray-700 mb-2">
+                일일 수익 목표
+              </label>
+              <div className="relative">
                 <input
+                  {...register('dailyGoal', { valueAsNumber: true })}
+                  id="dailyGoal"
                   type="number"
-                  min="10000"
-                  max="200000"
-                  step="5000"
-                  value={formData.dailyGoal}
-                  onChange={(e) => handleGoalChange(parseInt(e.target.value) || 50000)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="목표 금액을 입력하세요"
+                  min="0"
+                  max="1000000"
+                  step="10000"
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.dailyGoal ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  placeholder="50000"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  월 예상 수익: {(formData.dailyGoal * 30).toLocaleString()}원
-                </p>
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <span className="text-gray-500 text-sm">원</span>
+                </div>
+              </div>
+              {errors.dailyGoal && <p className="mt-2 text-sm text-red-600">{errors.dailyGoal.message}</p>}
+            </div>
+
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="font-medium text-gray-900 mb-2">💡 추천 목표</h4>
+              <div className="space-y-2 text-sm text-gray-600">
+                <div>• 초보자: 3-5만원</div>
+                <div>• 일반: 5-8만원</div>
+                <div>• 숙련자: 8-15만원</div>
               </div>
             </div>
           </div>
@@ -318,74 +270,70 @@ function OnboardingContent() {
         </div>
 
         {/* 컨텐츠 */}
-        <div className="bg-white py-8 px-4 shadow-xl sm:rounded-xl sm:px-10 border border-gray-200">
-          {errors.general && (
+        <div className="bg-white rounded-lg shadow-lg p-8">
+          {/* 에러 메시지 */}
+          {errors.root && (
             <div className="mb-6 p-4 border border-red-200 bg-red-50 rounded-lg">
-              <p className="text-sm text-red-600">{errors.general}</p>
+              <p className="text-sm text-red-600">{errors.root.message}</p>
             </div>
           )}
 
-          {renderStepContent()}
+          <form onSubmit={handleSubmit(onSubmit)}>
+            {/* 단계별 제목 */}
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-gray-900">{steps[currentStep - 1].title}</h2>
+              <p className="text-sm text-gray-600">{steps[currentStep - 1].description}</p>
+            </div>
 
-          {/* 버튼 */}
-          <div className="mt-8 flex justify-between">
-            <button
-              type="button"
-              onClick={handleBack}
-              disabled={currentStep === 1}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              이전
-            </button>
+            {/* 단계별 내용 */}
+            {renderStepContent()}
 
-            <button
-              type="button"
-              onClick={handleNext}
-              disabled={isLoading}
-              className="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
-            >
-              {isLoading ? (
-                <>
-                  <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  완료 중...
-                </>
-              ) : currentStep === steps.length ? (
-                <>
-                  설정 완료
-                  <CheckCircle className="w-4 h-4 ml-2" />
-                </>
-              ) : (
-                <>
+            {/* 버튼 영역 */}
+            <div className="mt-8 flex justify-between">
+              <button
+                type="button"
+                onClick={handlePrev}
+                disabled={currentStep === 1}
+                className={`px-6 py-2 border border-gray-300 rounded-lg text-sm font-medium ${
+                  currentStep === 1
+                    ? 'text-gray-400 cursor-not-allowed'
+                    : 'text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                } transition-colors`}
+              >
+                이전
+              </button>
+
+              {currentStep < steps.length ? (
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  disabled={
+                    (currentStep === 1 && watch('preferredAreas').length === 0) ||
+                    (currentStep === 2 && !watch('vehicleType')) ||
+                    (currentStep === 3 && (!watch('dailyGoal') || watch('dailyGoal') <= 0))
+                  }
+                  className={`px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center`}
+                >
                   다음
                   <ArrowRight className="w-4 h-4 ml-2" />
-                </>
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={`px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center`}
+                >
+                  {isSubmitting ? '완료 중...' : '완료'}
+                  <CheckCircle className="w-4 h-4 ml-2" />
+                </button>
               )}
-            </button>
-          </div>
+            </div>
+          </form>
         </div>
 
-        {/* 추가 정보 */}
+        {/* 하단 정보 */}
         <div className="mt-6 text-center">
-          <p className="text-xs text-gray-500">설정하신 정보는 언제든지 설정 페이지에서 수정할 수 있습니다.</p>
+          <p className="text-xs text-gray-500">설정하신 정보는 언제든지 설정 페이지에서 변경하실 수 있습니다.</p>
         </div>
       </div>
     </div>

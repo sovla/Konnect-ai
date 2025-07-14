@@ -5,24 +5,9 @@ import { Save, User, Mail, Phone, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { useEffect } from 'react';
 
-// zod 스키마 정의
-const profileSchema = z.object({
-  name: z
-    .string()
-    .min(2, '이름은 최소 2자 이상이어야 합니다')
-    .max(20, '이름은 최대 20자까지 입력 가능합니다')
-    .regex(/^[가-힣a-zA-Z\s]+$/, '이름은 한글, 영문, 공백만 입력 가능합니다'),
-  email: z.string().email('올바른 이메일 형식을 입력해주세요').min(1, '이메일은 필수 입력 항목입니다'),
-  phone: z
-    .string()
-    .optional()
-    .refine((val) => !val || /^010-\d{4}-\d{4}$/.test(val), '전화번호는 010-0000-0000 형식으로 입력해주세요'),
-});
-
-type ProfileFormData = z.infer<typeof profileSchema>;
+import { profileSchema, type ProfileFormData } from '@/app/lib/schemas';
 
 interface UserProfile {
   id: string;

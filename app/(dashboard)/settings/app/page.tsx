@@ -5,21 +5,9 @@ import { Save, Palette, Globe, Map, Shield, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { useEffect } from 'react';
 
-// zod 스키마 정의
-const appSettingsSchema = z.object({
-  theme: z.enum(['LIGHT', 'DARK', 'SYSTEM']),
-  language: z.enum(['KOREAN', 'ENGLISH']),
-  mapDefaultZoom: z.number().min(8, '줌 레벨은 최소 8 이상이어야 합니다').max(18, '줌 레벨은 최대 18 이하여야 합니다'),
-  mapDefaultLat: z.number().min(-90, '위도는 -90도 이상이어야 합니다').max(90, '위도는 90도 이하여야 합니다'),
-  mapDefaultLng: z.number().min(-180, '경도는 -180도 이상이어야 합니다').max(180, '경도는 180도 이하여야 합니다'),
-  mapTrafficLayer: z.boolean(),
-  mapTransitLayer: z.boolean(),
-});
-
-type AppSettingsFormData = z.infer<typeof appSettingsSchema>;
+import { appSettingsSchema, type AppSettingsFormData } from '@/app/lib/schemas';
 
 interface AppSettings extends AppSettingsFormData {
   id: string;

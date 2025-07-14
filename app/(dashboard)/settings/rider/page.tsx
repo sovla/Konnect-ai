@@ -5,47 +5,9 @@ import { Save, Target, Clock, MapPin, Bell, DollarSign, ArrowLeft } from 'lucide
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { useEffect } from 'react';
 
-// zod 스키마 정의
-const riderSettingsSchema = z.object({
-  // 운행 목표
-  dailyGoal: z
-    .number()
-    .min(0, '일일 목표는 0원 이상이어야 합니다')
-    .max(1000000, '일일 목표는 100만원을 초과할 수 없습니다'),
-  monthlyGoal: z
-    .number()
-    .min(0, '월간 목표는 0원 이상이어야 합니다')
-    .max(30000000, '월간 목표는 3000만원을 초과할 수 없습니다'),
-
-  // 운행 설정
-  minOrderAmount: z
-    .number()
-    .min(0, '최소 주문 금액은 0원 이상이어야 합니다')
-    .max(50000, '최소 주문 금액은 5만원을 초과할 수 없습니다'),
-  maxDistance: z
-    .number()
-    .min(1, '최대 배달 거리는 최소 1km 이상이어야 합니다')
-    .max(50, '최대 배달 거리는 50km를 초과할 수 없습니다'),
-  workingHours: z
-    .object({
-      start: z.number().min(0).max(23),
-      end: z.number().min(0).max(23),
-    })
-    .refine((data) => data.start < data.end, { message: '종료 시간은 시작 시간보다 늦어야 합니다' }),
-  autoAccept: z.boolean(),
-
-  // 알림 설정
-  pushNewOrder: z.boolean(),
-  pushGoalAchieve: z.boolean(),
-  pushPromotion: z.boolean(),
-  emailSummary: z.boolean(),
-  emailMarketing: z.boolean(),
-});
-
-type RiderSettingsFormData = z.infer<typeof riderSettingsSchema>;
+import { riderSettingsSchema, type RiderSettingsFormData } from '@/app/lib/schemas';
 
 interface RiderSettings extends RiderSettingsFormData {
   id: string;
