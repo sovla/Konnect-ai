@@ -1,90 +1,238 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/auth';
+import { prisma } from '@/app/lib/prisma';
 import {
   WeeklyAnalyticsResponseSchema,
   MonthlyAnalyticsResponseSchema,
   AnalyticsResponseSchema,
   GetAnalyticsRequestSchema,
 } from '@/app/types/dto';
-
-const weeklyStats = [
-  { date: '2025-01-08', earnings: 145000, deliveries: 32 },
-  { date: '2025-01-09', earnings: 132000, deliveries: 28 },
-  { date: '2025-01-10', earnings: 156000, deliveries: 35 },
-  { date: '2025-01-11', earnings: 178000, deliveries: 38 },
-  { date: '2025-01-12', earnings: 165000, deliveries: 33 },
-  { date: '2025-01-13', earnings: 189000, deliveries: 41 },
-  { date: '2025-01-14', earnings: 26800, deliveries: 5 },
-];
-
-const monthlyAnalysis = {
-  currentMonth: {
-    month: '2025-01',
-    totalEarnings: 2341000,
-    totalDeliveries: 487,
-    workingDays: 14,
-    avgDailyEarnings: 167214,
-    goalProgress: 58.5,
-    earningsBreakdown: {
-      base: 1756000,
-      promo: 425000,
-      tip: 160000,
-    },
-  },
-  lastMonth: {
-    month: '2024-12',
-    totalEarnings: 3890000,
-    totalDeliveries: 824,
-    workingDays: 26,
-    avgDailyEarnings: 149615,
-  },
-  dayOfWeekStats: [
-    { day: '월', avgEarnings: 142000, avgDeliveries: 28 },
-    { day: '화', avgEarnings: 138000, avgDeliveries: 27 },
-    { day: '수', avgEarnings: 145000, avgDeliveries: 29 },
-    { day: '목', avgEarnings: 155000, avgDeliveries: 31 },
-    { day: '금', avgEarnings: 168000, avgDeliveries: 34 },
-    { day: '토', avgEarnings: 185000, avgDeliveries: 38 },
-    { day: '일', avgEarnings: 172000, avgDeliveries: 36 },
-  ],
-};
+import { getLast7Days, getThisMonthStart, getThisMonthEnd, formatDate } from '@/app/utils/dateHelpers';
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
+  try {
+    const session = await auth();
 
-  // 요청 파라미터 검증
-  const queryParams = {
-    type: searchParams.get('type'),
-  };
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+    }
 
-  const validatedParams = GetAnalyticsRequestSchema.parse(queryParams);
+    const { searchParams } = new URL(request.url);
 
-  switch (validatedParams.type) {
-    case 'weekly': {
-      const response = {
-        success: true,
-        data: weeklyStats,
-      };
-      const validatedResponse = WeeklyAnalyticsResponseSchema.parse(response);
-      return NextResponse.json(validatedResponse);
+    // 요청 파라미터 검증
+    const queryParams = {
+      type: searchParams.get('type'),
+    };
+
+    const validatedParams = GetAnalyticsRequestSchema.parse(queryParams);
+
+    // 라이더 프로필 조회
+    const riderProfile = await prisma.riderProfile.findUnique({
+      where: { userId: session.user.id },
+    });
+
+    if (!riderProfile) {
+      return NextResponse.json({ error: '라이더 프로필을 찾을 수 없습니다.' }, { status: 404 });
     }
-    case 'monthly': {
-      const response = {
-        success: true,
-        data: monthlyAnalysis,
-      };
-      const validatedResponse = MonthlyAnalyticsResponseSchema.parse(response);
-      return NextResponse.json(validatedResponse);
+
+    switch (validatedParams.type) {
+      case 'weekly': {
+        // 지난 7일간의 데이터 조회 (dateHelpers 활용)
+        const weekAgo = getLast7Days();
+
+        const weeklyDeliveries = await prisma.delivery.findMany({
+          where: {
+            riderId: riderProfile.id,
+            date: {
+              gte: weekAgo,
+            },
+          },
+          select: {
+            date: true,
+            totalEarnings: true,
+          },
+          orderBy: { date: 'asc' },
+        });
+
+        // 날짜별로 그룹화
+        const dailyStats = new Map();
+
+        weeklyDeliveries.forEach((delivery) => {
+          const dateKey = formatDate(delivery.date);
+          if (!dailyStats.has(dateKey)) {
+            dailyStats.set(dateKey, { earnings: 0, deliveries: 0 });
+          }
+          const dayData = dailyStats.get(dateKey);
+          dayData.earnings += delivery.totalEarnings;
+          dayData.deliveries += 1;
+        });
+
+        // 지난 7일간 각 날짜별 데이터 생성 (dateHelpers 활용)
+        const weeklyStats = [];
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date();
+          date.setDate(date.getDate() - i);
+          const dateKey = formatDate(date);
+          const dayData = dailyStats.get(dateKey) || { earnings: 0, deliveries: 0 };
+
+          weeklyStats.push({
+            date: dateKey,
+            earnings: dayData.earnings,
+            deliveries: dayData.deliveries,
+          });
+        }
+
+        const response = {
+          success: true,
+          data: weeklyStats,
+        };
+        const validatedResponse = WeeklyAnalyticsResponseSchema.parse(response);
+        return NextResponse.json(validatedResponse);
+      }
+
+      case 'monthly': {
+        // 현재 월과 지난 달 데이터 조회 (dateHelpers 활용)
+        const currentMonth = getThisMonthStart();
+        const nextMonth = getThisMonthEnd();
+        nextMonth.setDate(nextMonth.getDate() + 1); // 다음 월 시작일
+        const lastMonth = new Date(currentMonth);
+        lastMonth.setMonth(lastMonth.getMonth() - 1);
+
+        // 현재 월 데이터
+        const currentMonthDeliveries = await prisma.delivery.findMany({
+          where: {
+            riderId: riderProfile.id,
+            date: {
+              gte: currentMonth,
+              lt: nextMonth,
+            },
+          },
+          select: {
+            baseEarnings: true,
+            promoEarnings: true,
+            tipEarnings: true,
+            totalEarnings: true,
+            date: true,
+          },
+        });
+
+        // 지난 달 데이터
+        const lastMonthDeliveries = await prisma.delivery.findMany({
+          where: {
+            riderId: riderProfile.id,
+            date: {
+              gte: lastMonth,
+              lt: currentMonth,
+            },
+          },
+          select: {
+            totalEarnings: true,
+            date: true,
+          },
+        });
+
+        // 현재 월 통계 계산
+        const currentMonthStats = {
+          month: formatDate(currentMonth, 'yyyy-MM'),
+          totalEarnings: currentMonthDeliveries.reduce((sum, d) => sum + d.totalEarnings, 0),
+          totalDeliveries: currentMonthDeliveries.length,
+          workingDays: new Set(currentMonthDeliveries.map((d) => formatDate(d.date))).size,
+          avgDailyEarnings: 0,
+          goalProgress: 0,
+          earningsBreakdown: {
+            base: currentMonthDeliveries.reduce((sum, d) => sum + d.baseEarnings, 0),
+            promo: currentMonthDeliveries.reduce((sum, d) => sum + d.promoEarnings, 0),
+            tip: currentMonthDeliveries.reduce((sum, d) => sum + d.tipEarnings, 0),
+          },
+        };
+
+        currentMonthStats.avgDailyEarnings =
+          currentMonthStats.workingDays > 0
+            ? Math.round(currentMonthStats.totalEarnings / currentMonthStats.workingDays)
+            : 0;
+
+        currentMonthStats.goalProgress =
+          riderProfile.monthlyGoal > 0
+            ? Math.round((currentMonthStats.totalEarnings / riderProfile.monthlyGoal) * 100 * 10) / 10
+            : 0;
+
+        // 지난 달 통계 계산 (dateHelpers 활용)
+        const lastMonthStats = {
+          month: formatDate(lastMonth, 'yyyy-MM'),
+          totalEarnings: lastMonthDeliveries.reduce((sum, d) => sum + d.totalEarnings, 0),
+          totalDeliveries: lastMonthDeliveries.length,
+          workingDays: new Set(lastMonthDeliveries.map((d) => formatDate(d.date))).size,
+          avgDailyEarnings: 0,
+        };
+
+        lastMonthStats.avgDailyEarnings =
+          lastMonthStats.workingDays > 0 ? Math.round(lastMonthStats.totalEarnings / lastMonthStats.workingDays) : 0;
+
+        // 요일별 통계 (현재 월 기준)
+        const dayOfWeekMap = new Map();
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+
+        currentMonthDeliveries.forEach((delivery) => {
+          const dayOfWeek = delivery.date.getDay();
+          const dayName = dayNames[dayOfWeek];
+
+          if (!dayOfWeekMap.has(dayName)) {
+            dayOfWeekMap.set(dayName, { earnings: 0, deliveries: 0, count: 0 });
+          }
+
+          const dayData = dayOfWeekMap.get(dayName);
+          dayData.earnings += delivery.totalEarnings;
+          dayData.deliveries += 1;
+        });
+
+        // 요일별 평균 계산
+        const dayOfWeekStats = dayNames.map((day) => {
+          const dayData = dayOfWeekMap.get(day) || { earnings: 0, deliveries: 0, count: 0 };
+          const dayCount = Math.max(1, Math.floor(currentMonthStats.workingDays / 7)); // 대략적인 요일별 일수
+
+          return {
+            day,
+            avgEarnings: Math.round(dayData.earnings / dayCount),
+            avgDeliveries: Math.round(dayData.deliveries / dayCount),
+          };
+        });
+
+        const monthlyAnalysis = {
+          currentMonth: currentMonthStats,
+          lastMonth: lastMonthStats,
+          dayOfWeekStats,
+        };
+
+        const response = {
+          success: true,
+          data: monthlyAnalysis,
+        };
+        const validatedResponse = MonthlyAnalyticsResponseSchema.parse(response);
+        return NextResponse.json(validatedResponse);
+      }
+
+      default: {
+        // 주간과 월간 데이터를 모두 조회하여 반환
+        // 재귀 호출로 각각의 데이터를 가져온 후 합침
+        const weeklyResponse = await GET(new Request(`${request.url}&type=weekly`));
+        const monthlyResponse = await GET(new Request(`${request.url}&type=monthly`));
+
+        const weeklyData = await weeklyResponse.json();
+        const monthlyData = await monthlyResponse.json();
+
+        const response = {
+          success: true,
+          data: {
+            weekly: weeklyData.data,
+            monthly: monthlyData.data,
+          },
+        };
+        const validatedResponse = AnalyticsResponseSchema.parse(response);
+        return NextResponse.json(validatedResponse);
+      }
     }
-    default: {
-      const response = {
-        success: true,
-        data: {
-          weekly: weeklyStats,
-          monthly: monthlyAnalysis,
-        },
-      };
-      const validatedResponse = AnalyticsResponseSchema.parse(response);
-      return NextResponse.json(validatedResponse);
-    }
+  } catch (error) {
+    console.error('분석 데이터 조회 오류:', error);
+    return NextResponse.json({ error: '서버 오류가 발생했습니다.' }, { status: 500 });
   }
 }

@@ -1,296 +1,210 @@
 import { NextResponse } from 'next/server';
+import { prisma } from '@/app/lib/prisma';
 import {
   AIPredictionsResponseSchema,
   HeatmapResponseSchema,
   HourlyPredictionsResponseSchema,
   GetAIPredictionsRequestSchema,
 } from '@/app/types/dto';
+import { getCurrentDate } from '@/app/utils/dateHelpers';
 
-const aiPredictions = [
-  {
-    time: '14:00',
-    polygons: [
-      {
-        name: '센텀시티 주변',
-        coords: [
-          [35.169, 129.129],
-          [35.175, 129.135],
-          [35.165, 129.14],
-          [35.16, 129.125],
-        ],
-        expectedCalls: 8,
-        avgFee: 4500,
-        confidence: 85,
-        reasons: [
-          {
-            type: 'historical_data',
-            title: '과거 데이터 분석',
-            description: '지난 4주간 이 시간대 평균 8.2건의 주문이 발생했습니다.',
-            impact: 'high',
-            confidence: 92,
-          },
-          {
-            type: 'restaurant_density',
-            title: '음식점 밀집도',
-            description: '반경 500m 내 24개의 음식점이 위치해 있습니다.',
-            impact: 'medium',
-            confidence: 88,
-          },
-        ],
-      },
-      {
-        name: '서면 상권',
-        coords: [
-          [35.158, 129.059],
-          [35.162, 129.065],
-          [35.155, 129.068],
-          [35.152, 129.055],
-        ],
-        expectedCalls: 12,
-        avgFee: 4200,
-        confidence: 92,
-        reasons: [
-          {
-            type: 'time_pattern',
-            title: '점심 시간대 패턴',
-            description: '평일 점심시간에 주문량이 급증하는 지역입니다.',
-            impact: 'high',
-            confidence: 95,
-          },
-          {
-            type: 'event',
-            title: '특별 프로모션',
-            description: '서면 지역 음식점 할인 이벤트가 진행중입니다.',
-            impact: 'medium',
-            confidence: 85,
-          },
-        ],
-      },
-    ],
-  },
-  {
-    time: '15:00',
-    polygons: [
-      {
-        name: '해운대 해변가',
-        coords: [
-          [35.158, 129.16],
-          [35.165, 129.168],
-          [35.162, 129.175],
-          [35.155, 129.165],
-        ],
-        expectedCalls: 6,
-        avgFee: 3800,
-        confidence: 78,
-        reasons: [],
-      },
-    ],
-  },
-  {
-    time: '18:00',
-    polygons: [
-      {
-        name: '연산동 주거지역',
-        coords: [
-          [35.185, 129.075],
-          [35.192, 129.085],
-          [35.188, 129.09],
-          [35.18, 129.078],
-        ],
-        expectedCalls: 15,
-        avgFee: 4800,
-        confidence: 95,
-        reasons: [],
-      },
-      {
-        name: '광안리 상권',
-        coords: [
-          [35.152, 129.118],
-          [35.157, 129.125],
-          [35.148, 129.128],
-          [35.145, 129.115],
-        ],
-        expectedCalls: 10,
-        avgFee: 5200,
-        confidence: 88,
-        reasons: [],
-      },
-    ],
-  },
-];
-
-const heatmapData = [
-  {
-    lat: 35.169,
-    lng: 129.129,
-    weight: 0.8,
-    recentOrders: 24,
-    avgWaitTime: 8,
-    hourlyTrend: 'rising',
-  },
-  {
-    lat: 35.158,
-    lng: 129.059,
-    weight: 0.9,
-    recentOrders: 32,
-    avgWaitTime: 5,
-    hourlyTrend: 'rising',
-  },
-  {
-    lat: 35.185,
-    lng: 129.075,
-    weight: 0.7,
-    recentOrders: 18,
-    avgWaitTime: 12,
-    hourlyTrend: 'falling',
-  },
-  {
-    lat: 35.152,
-    lng: 129.118,
-    weight: 0.6,
-    recentOrders: 15,
-    avgWaitTime: 6,
-    hourlyTrend: 'stable',
-  },
-  {
-    lat: 35.175,
-    lng: 128.995,
-    weight: 0.5,
-    recentOrders: 12,
-    avgWaitTime: 15,
-    hourlyTrend: 'falling',
-  },
-  {
-    lat: 35.135,
-    lng: 129.095,
-    weight: 0.4,
-    recentOrders: 9,
-    avgWaitTime: 10,
-    hourlyTrend: 'stable',
-  },
-  {
-    lat: 35.16,
-    lng: 129.16,
-    weight: 0.8,
-    recentOrders: 22,
-    avgWaitTime: 7,
-    hourlyTrend: 'rising',
-  },
-  {
-    lat: 35.17,
-    lng: 129.17,
-    weight: 0.7,
-    recentOrders: 19,
-    avgWaitTime: 9,
-    hourlyTrend: 'stable',
-  },
-];
-
-const hourlyPredictions = [
-  {
-    hour: 13,
-    expectedOrders: 5,
-    avgEarnings: 25000,
-    busyAreas: ['센텀시티'],
-    confidence: 80,
-    recommendation: '센텀시티로 이동하세요',
-  },
-  {
-    hour: 14,
-    expectedOrders: 8,
-    avgEarnings: 40000,
-    busyAreas: ['서면', '센텀시티'],
-    confidence: 85,
-    recommendation: '서면 지역이 좋습니다',
-  },
-  {
-    hour: 15,
-    expectedOrders: 6,
-    avgEarnings: 30000,
-    busyAreas: ['해운대'],
-    confidence: 78,
-    recommendation: '해운대로 이동 추천',
-  },
-  { hour: 16, expectedOrders: 4, avgEarnings: 20000, busyAreas: [], confidence: 70, recommendation: '잠시 휴식하세요' },
-  {
-    hour: 17,
-    expectedOrders: 7,
-    avgEarnings: 35000,
-    busyAreas: ['연산동'],
-    confidence: 82,
-    recommendation: '연산동 지역으로',
-  },
-  {
-    hour: 18,
-    expectedOrders: 12,
-    avgEarnings: 60000,
-    busyAreas: ['연산동', '광안리'],
-    confidence: 95,
-    recommendation: '저녁 시간 최적 지역',
-  },
-  {
-    hour: 19,
-    expectedOrders: 15,
-    avgEarnings: 75000,
-    busyAreas: ['서면', '연산동'],
-    confidence: 98,
-    recommendation: '가장 바쁜 시간대',
-  },
-  {
-    hour: 20,
-    expectedOrders: 10,
-    avgEarnings: 50000,
-    busyAreas: ['광안리'],
-    confidence: 88,
-    recommendation: '광안리 추천',
-  },
-  {
-    hour: 21,
-    expectedOrders: 6,
-    avgEarnings: 30000,
-    busyAreas: [],
-    confidence: 75,
-    recommendation: '주문량 감소 예상',
-  },
-];
+// 한글 hourlyTrend를 영어로 변환하는 함수
+function convertHourlyTrend(koreanTrend: string): 'rising' | 'stable' | 'falling' {
+  switch (koreanTrend) {
+    case '증가':
+    case '매우 증가':
+      return 'rising';
+    case '안정':
+      return 'stable';
+    case '감소':
+    case '매우 감소':
+      return 'falling';
+    default:
+      return 'stable'; // 기본값
+  }
+}
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
+  try {
+    const { searchParams } = new URL(request.url);
 
-  // 요청 파라미터 검증 (null 값 허용)
-  const queryParams = {
-    type: searchParams.get('type'),
-    time: searchParams.get('time'), // null 허용
-    area: searchParams.get('area'), // null 허용
-  };
+    // 요청 파라미터 검증 (null 값 허용)
+    const queryParams = {
+      type: searchParams.get('type'),
+      time: searchParams.get('time'), // null 허용
+      area: searchParams.get('area'), // null 허용
+    };
 
-  const validatedParams = GetAIPredictionsRequestSchema.parse(queryParams);
+    const validatedParams = GetAIPredictionsRequestSchema.parse(queryParams);
 
-  switch (validatedParams.type) {
-    case 'heatmap': {
-      const response = {
-        success: true,
-        data: heatmapData,
-      };
-      const validatedResponse = HeatmapResponseSchema.parse(response);
-      return NextResponse.json(validatedResponse);
+    switch (validatedParams.type) {
+      case 'heatmap': {
+        // DB에서 히트맵 데이터 조회
+        const heatmapPoints = await prisma.heatmapPoint.findMany({
+          orderBy: { weight: 'desc' },
+          select: {
+            lat: true,
+            lng: true,
+            weight: true,
+            recentOrders: true,
+            avgWaitTime: true,
+            hourlyTrend: true,
+          },
+        });
+
+        // 한글 hourlyTrend를 영어로 변환
+        const formattedHeatmapPoints = heatmapPoints.map((point) => ({
+          ...point,
+          hourlyTrend: convertHourlyTrend(point.hourlyTrend),
+        }));
+
+        const response = {
+          success: true,
+          data: formattedHeatmapPoints,
+        };
+        const validatedResponse = HeatmapResponseSchema.parse(response);
+        return NextResponse.json(validatedResponse);
+      }
+
+      case 'hourly': {
+        // DB에서 시간대별 예측 데이터 조회 (오늘 날짜 기준, dateHelpers 활용)
+        const today = getCurrentDate();
+        const startOfDay = new Date(today);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(today);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const hourlyPredictionsData = await prisma.aIZonePrediction.findMany({
+          where: {
+            predictionDate: {
+              gte: startOfDay,
+              lt: endOfDay,
+            },
+          },
+          include: {
+            zone: true,
+          },
+          orderBy: { hour: 'asc' },
+        });
+
+        // 시간대별로 그룹화하여 집계
+        const hourlyMap = new Map();
+
+        hourlyPredictionsData.forEach((prediction) => {
+          const hour = prediction.hour;
+          if (!hourlyMap.has(hour)) {
+            hourlyMap.set(hour, {
+              hour,
+              expectedOrders: 0,
+              avgEarnings: 0,
+              busyAreas: [],
+              confidence: 0,
+              count: 0,
+            });
+          }
+
+          const hourData = hourlyMap.get(hour);
+          hourData.expectedOrders += prediction.expectedCalls;
+          hourData.avgEarnings += prediction.zone.avgFee * prediction.expectedCalls;
+          hourData.confidence += prediction.confidence;
+          hourData.count += 1;
+
+          if (prediction.expectedCalls >= 5) {
+            hourData.busyAreas.push(prediction.zone.name);
+          }
+        });
+
+        // 평균 계산 및 추천 메시지 생성
+        const hourlyPredictions = Array.from(hourlyMap.values()).map((data) => ({
+          hour: data.hour,
+          expectedOrders: data.expectedOrders,
+          avgEarnings: Math.round(data.avgEarnings),
+          busyAreas: [...new Set(data.busyAreas)], // 중복 제거
+          confidence: Math.round((data.confidence / data.count) * 100),
+          recommendation:
+            data.expectedOrders >= 10
+              ? '가장 바쁜 시간대'
+              : data.expectedOrders >= 6
+              ? `${data.busyAreas[0] || '추천 지역'}으로 이동하세요`
+              : data.expectedOrders >= 4
+              ? '적당한 주문량 예상'
+              : '잠시 휴식하세요',
+        }));
+
+        const response = {
+          success: true,
+          data: hourlyPredictions,
+        };
+        const validatedResponse = HourlyPredictionsResponseSchema.parse(response);
+        return NextResponse.json(validatedResponse);
+      }
+
+      case 'predictions':
+      default: {
+        // DB에서 AI 예측 구역 데이터 조회 (dateHelpers 활용)
+        const today = getCurrentDate();
+        const startOfDay = new Date(today);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(today);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const aiZones = await prisma.aIZone.findMany({
+          where: { isActive: true },
+          include: {
+            recommendations: true,
+            predictions: {
+              where: {
+                predictionDate: {
+                  gte: startOfDay,
+                  lt: endOfDay,
+                },
+              },
+            },
+          },
+        });
+
+        // 시간대별로 그룹화
+        const timeSlots = ['14:00', '15:00', '18:00'];
+        const aiPredictions = timeSlots.map((time) => {
+          const hour = parseInt(time.split(':')[0]);
+
+          const polygons = aiZones
+            .filter((zone) => zone.predictions.some((pred) => pred.hour === hour))
+            .map((zone) => {
+              const prediction = zone.predictions.find((pred) => pred.hour === hour);
+
+              return {
+                name: zone.name,
+                coords: zone.coordinates as number[][],
+                expectedCalls: prediction?.expectedCalls || zone.expectedCalls,
+                avgFee: zone.avgFee,
+                confidence: Math.round((prediction?.confidence || zone.confidence) * 100),
+                reasons: zone.recommendations.map((rec) => ({
+                  type: rec.type.toLowerCase(),
+                  title: rec.title,
+                  description: rec.description,
+                  impact: rec.impact.toLowerCase(),
+                  confidence: Math.round(rec.confidence * 100),
+                })),
+              };
+            });
+
+          return {
+            time,
+            polygons,
+          };
+        });
+
+        const response = {
+          success: true,
+          data: aiPredictions,
+        };
+        const validatedResponse = AIPredictionsResponseSchema.parse(response);
+        return NextResponse.json(validatedResponse);
+      }
     }
-    case 'hourly': {
-      const response = {
-        success: true,
-        data: hourlyPredictions,
-      };
-      const validatedResponse = HourlyPredictionsResponseSchema.parse(response);
-      return NextResponse.json(validatedResponse);
-    }
-    case 'predictions':
-    default: {
-      const response = {
-        success: true,
-        data: aiPredictions,
-      };
-      const validatedResponse = AIPredictionsResponseSchema.parse(response);
-      return NextResponse.json(validatedResponse);
-    }
+  } catch (error) {
+    console.error('AI 예측 데이터 조회 오류:', error);
+    return NextResponse.json({ error: '서버 오류가 발생했습니다.' }, { status: 500 });
   }
 }
