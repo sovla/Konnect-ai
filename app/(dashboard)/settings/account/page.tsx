@@ -5,7 +5,7 @@ import { Trash2, AlertTriangle, ArrowLeft, User, Calendar, Package, DollarSign, 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { useAccountStats, useDeleteAccount } from '@/app/hooks';
+import { useAccountStats, useAuth, useDeleteAccount } from '@/app/hooks';
 import { QueryWrapper } from '@/app/components/common/DataWrapper';
 
 export default function AccountSettingsPage() {
@@ -18,6 +18,7 @@ export default function AccountSettingsPage() {
   // 설정 훅들 사용
   const accountStatsQuery = useAccountStats();
   const deleteAccountMutation = useDeleteAccount();
+  const { logout } = useAuth();
 
   const handleDeleteAccount = async () => {
     if (deleteConfirmText !== '계정을 삭제하겠습니다' || !password) {
@@ -29,7 +30,9 @@ export default function AccountSettingsPage() {
         password,
         confirmation: '계정을 삭제하겠습니다',
       });
+
       // 계정 삭제 성공 시 로그인 페이지로 이동 (세션은 서버에서 정리됨)
+      logout();
       router.push('/auth/login?message=account-deleted');
     } catch (error) {
       console.error('계정 삭제 실패:', error);

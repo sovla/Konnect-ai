@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { auth } from '@/auth';
+import { auth, signOut } from '@/auth';
 import { prisma } from '@/app/lib/prisma';
 import bcrypt from 'bcryptjs';
 import {
@@ -125,6 +125,7 @@ export async function DELETE(request: NextRequest) {
 
     // 응답 검증
     const validatedResponse = DeleteAccountResponseSchema.parse(responseData);
+    signOut();
     return Response.json(validatedResponse);
   } catch (error) {
     console.error('계정 삭제 실패:', error);
@@ -230,6 +231,8 @@ export async function GET() {
 
     // 응답 검증
     const validatedResponse = AccountDeletionInfoResponseSchema.parse(responseData);
+    // 세선졍리
+
     return Response.json(validatedResponse);
   } catch (error) {
     console.error('계정 삭제 정보 조회 실패:', error);

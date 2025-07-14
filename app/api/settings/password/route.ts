@@ -103,6 +103,7 @@ export async function PUT(request: NextRequest) {
 
     // 응답 검증
     const validatedResponse = ChangePasswordResponseSchema.parse(responseData);
+
     return Response.json(validatedResponse);
   } catch (error) {
     console.error('비밀번호 변경 실패:', error);
