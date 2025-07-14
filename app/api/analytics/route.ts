@@ -1,3 +1,4 @@
+import { MonthlyAnalysis } from '@/app/types';
 import { NextResponse } from 'next/server';
 
 const weeklyStats = [
@@ -10,7 +11,7 @@ const weeklyStats = [
   { date: '2025-01-14', earnings: 26800, deliveries: 5 },
 ];
 
-const monthlyAnalysis = {
+const monthlyAnalysis: MonthlyAnalysis = {
   currentMonth: {
     month: '2025-01',
     totalEarnings: 2341000,

@@ -214,6 +214,16 @@ export const formatOnlineTime = (hours: number, minutes: number = 0, seconds: nu
   return `${h}:${m}:${s}`;
 };
 
+// 통화 포맷팅 함수
+export const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat('ko-KR', {
+    style: 'currency',
+    currency: 'KRW',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
+
 // 디버그용: 현재 사용 중인 날짜 정보 출력
 export const getDateInfo = () => {
   return {

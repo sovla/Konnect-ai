@@ -1,6 +1,7 @@
+import { AIPrediction, HourlyPrediction } from '@/app/types';
 import { NextResponse } from 'next/server';
 
-const aiPredictions = [
+const aiPredictions: AIPrediction[] = [
   {
     time: '14:00',
     polygons: [
@@ -89,7 +90,7 @@ const heatmapData = [
   { lat: 35.17, lng: 129.17, weight: 0.7 },
 ];
 
-const hourlyPredictions = [
+const hourlyPredictions: HourlyPrediction[] = [
   { hour: 13, expectedCalls: 5, confidence: 80 },
   { hour: 14, expectedCalls: 8, confidence: 85 },
   { hour: 15, expectedCalls: 6, confidence: 78 },

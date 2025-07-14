@@ -1,9 +1,24 @@
 'use client';
 
-import { DashboardCard } from './components';
+import {
+  DashboardCard,
+  QueryWrapper,
+  TodayStatsSkeleton,
+  HotspotSkeleton,
+  PredictionSkeleton,
+  AnnouncementSkeleton,
+} from './components';
 import { TrendingUp, MapPin, Clock, Bell } from 'lucide-react';
+import { useTodayStats, useAIPredictions, useAnnouncements } from './hooks/useQueries';
+import { formatCurrency } from './utils/dateHelpers';
 
 export default function Dashboard() {
+  // API 데이터 훅들
+  const todayStatsQuery = useTodayStats();
+  const aiPredictionsQuery = useAIPredictions('predictions');
+  const hourlyPredictionsQuery = useAIPredictions('hourly');
+  const announcementsQuery = useAnnouncements({ active: true });
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -15,129 +30,167 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 위젯 1: 오늘의 성과 */}
         <DashboardCard title="오늘의 성과" icon={TrendingUp}>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">실시간 총수입</span>
-              <span className="text-2xl font-bold text-blue-600">₩112,500</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">완료 건수</span>
-              <span className="text-lg font-semibold">25건</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">온라인 시간</span>
-              <span className="text-lg font-semibold">06:30:45</span>
-            </div>
+          <QueryWrapper
+            query={todayStatsQuery}
+            loadingMessage="성과 데이터 로딩 중..."
+            errorMessage="성과 데이터를 불러올 수 없습니다"
+            loadingSkeleton={<TodayStatsSkeleton />}
+          >
+            {(data) => (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">실시간 총수입</span>
+                  <span className="text-2xl font-bold text-blue-600">{formatCurrency(data.data.totalEarnings)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">완료 건수</span>
+                  <span className="text-lg font-semibold">{data.data.completedDeliveries}건</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">온라인 시간</span>
+                  <span className="text-lg font-semibold">{data.data.onlineTime}</span>
+                </div>
 
-            {/* 일일 목표 달성률 */}
-            <div className="pt-2">
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-600">일일 목표 달성률</span>
-                <span className="font-medium text-green-600">75%</span>
+                {/* 일일 목표 달성률 */}
+                <div className="pt-2">
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-gray-600">일일 목표 달성률</span>
+                    <span className="font-medium text-green-600">{data.data.goalProgress.toFixed(1)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-green-500 h-2 rounded-full"
+                      style={{ width: `${Math.min(data.data.goalProgress, 100)}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    건당 평균: {formatCurrency(data.data.avgEarningsPerDelivery)}
+                  </p>
+                </div>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-green-500 h-2 rounded-full" style={{ width: '75%' }}></div>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">목표까지 ₩37,500 남았습니다</p>
-            </div>
-          </div>
+            )}
+          </QueryWrapper>
         </DashboardCard>
 
         {/* 위젯 2: AI 추천 핫스팟 */}
         <DashboardCard title="AI 추천 핫스팟" icon={MapPin}>
-          <div className="space-y-4">
-            <div className="bg-gray-100 h-32 rounded-lg flex items-center justify-center">
-              <div className="text-center">
-                <MapPin className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">카카오맵 미니맵</p>
-                <p className="text-xs text-gray-400">추후 구현 예정</p>
+          <QueryWrapper
+            query={aiPredictionsQuery}
+            loadingMessage="핫스팟 데이터 로딩 중..."
+            errorMessage="핫스팟 데이터를 불러올 수 없습니다"
+            loadingSkeleton={<HotspotSkeleton />}
+          >
+            {(data) => (
+              <div className="space-y-4">
+                <div className="bg-gray-100 h-32 rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <MapPin className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">카카오맵 미니맵</p>
+                    <p className="text-xs text-gray-400">추후 구현 예정</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {data.data[0]?.polygons.slice(0, 2).map((polygon, index) => (
+                    <div
+                      key={index}
+                      className={`flex items-center justify-between p-2 rounded ${
+                        index === 0 ? 'bg-red-50' : 'bg-orange-50'
+                      }`}
+                    >
+                      <div>
+                        <span className="text-sm font-medium">{polygon.name}</span>
+                        <p className="text-xs text-gray-500">
+                          예상 콜: {polygon.expectedCalls}건/시간 | 평균료: {formatCurrency(polygon.avgFee)}
+                        </p>
+                      </div>
+                      <span className={`text-xs font-medium ${index === 0 ? 'text-red-600' : 'text-orange-600'}`}>
+                        {index === 0 ? 'HOT' : 'WARM'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between p-2 bg-red-50 rounded">
-                <span className="text-sm font-medium">해운대 센텀시티</span>
-                <span className="text-xs text-red-600 font-medium">HOT</span>
-              </div>
-              <div className="flex items-center justify-between p-2 bg-orange-50 rounded">
-                <span className="text-sm font-medium">서면 롯데백화점</span>
-                <span className="text-xs text-orange-600 font-medium">WARM</span>
-              </div>
-            </div>
-          </div>
+            )}
+          </QueryWrapper>
         </DashboardCard>
 
         {/* 위젯 3: 시간대별 콜 예측 */}
         <DashboardCard title="시간대별 콜 예측" icon={Clock}>
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">지금부터 3시간 동안의 콜 예측</p>
+          <QueryWrapper
+            query={hourlyPredictionsQuery}
+            loadingMessage="예측 데이터 로딩 중..."
+            errorMessage="예측 데이터를 불러올 수 없습니다"
+            loadingSkeleton={<PredictionSkeleton />}
+          >
+            {(data) => (
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">지금부터 3시간 동안의 콜 예측</p>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">14:00 - 15:00</span>
-                <div className="flex items-center gap-2">
-                  <div className="w-16 bg-gray-200 rounded-full h-2">
-                    <div className="bg-green-500 h-2 rounded-full" style={{ width: '80%' }}></div>
-                  </div>
-                  <span className="text-sm font-medium text-green-600">많음</span>
+                <div className="space-y-3">
+                  {data.data.slice(0, 3).map((prediction) => {
+                    const level =
+                      prediction.expectedCalls > 10 ? 'high' : prediction.expectedCalls > 6 ? 'medium' : 'low';
+                    const levelText = level === 'high' ? '많음' : level === 'medium' ? '보통' : '적음';
+                    const levelColor = level === 'high' ? 'green' : level === 'medium' ? 'yellow' : 'red';
+                    const progressWidth = Math.min((prediction.expectedCalls / 15) * 100, 100);
+
+                    return (
+                      <div key={prediction.hour} className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">
+                          {prediction.hour}:00 - {prediction.hour + 1}:00
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-16 bg-gray-200 rounded-full h-2">
+                            <div
+                              className={`bg-${levelColor}-500 h-2 rounded-full`}
+                              style={{ width: `${progressWidth}%` }}
+                            ></div>
+                          </div>
+                          <span className={`text-sm font-medium text-${levelColor}-600`}>{levelText}</span>
+                          <span className="text-xs text-gray-500 ml-1">({prediction.expectedCalls}건)</span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">15:00 - 16:00</span>
-                <div className="flex items-center gap-2">
-                  <div className="w-16 bg-gray-200 rounded-full h-2">
-                    <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '60%' }}></div>
-                  </div>
-                  <span className="text-sm font-medium text-yellow-600">보통</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">16:00 - 17:00</span>
-                <div className="flex items-center gap-2">
-                  <div className="w-16 bg-gray-200 rounded-full h-2">
-                    <div className="bg-red-500 h-2 rounded-full" style={{ width: '40%' }}></div>
-                  </div>
-                  <span className="text-sm font-medium text-red-600">적음</span>
-                </div>
-              </div>
-            </div>
-          </div>
+            )}
+          </QueryWrapper>
         </DashboardCard>
 
         {/* 위젯 4: 주요 공지 */}
         <DashboardCard title="주요 공지" icon={Bell}>
-          <div className="space-y-3">
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-blue-900">점심시간 프로모션 진행중!</h4>
-                  <p className="text-sm text-blue-700 mt-1">12:00-14:00 기본료 +500원 추가 지급</p>
-                  <p className="text-xs text-blue-600 mt-2">2시간 남음</p>
-                </div>
-              </div>
-            </div>
+          <QueryWrapper
+            query={announcementsQuery}
+            loadingMessage="공지사항 로딩 중..."
+            errorMessage="공지사항을 불러올 수 없습니다"
+            loadingSkeleton={<AnnouncementSkeleton />}
+          >
+            {(data) => (
+              <div className="space-y-3">
+                {data.data.slice(0, 3).map((announcement) => {
+                  const bgColor =
+                    announcement.type === 'promotion' ? 'blue' : announcement.type === 'incentive' ? 'green' : 'yellow';
 
-            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-green-900">신규 배달존 오픈</h4>
-                  <p className="text-sm text-green-700 mt-1">광안리 해변가 신규 오픈 기념 이벤트</p>
-                  <p className="text-xs text-green-600 mt-2">7월 15일까지</p>
-                </div>
+                  return (
+                    <div
+                      key={announcement.id}
+                      className={`p-3 bg-${bgColor}-50 border border-${bgColor}-200 rounded-lg`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`w-2 h-2 bg-${bgColor}-500 rounded-full mt-2`}></div>
+                        <div className="flex-1">
+                          <h4 className={`font-medium text-${bgColor}-900`}>{announcement.title}</h4>
+                          <p className={`text-sm text-${bgColor}-700 mt-1`}>{announcement.content}</p>
+                          <p className={`text-xs text-${bgColor}-600 mt-2`}>{announcement.endDate}까지</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </div>
-
-            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <div className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2"></div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-yellow-900">정산 일정 안내</h4>
-                  <p className="text-sm text-yellow-700 mt-1">이번 주 정산: 7월 18일 (목)</p>
-                </div>
-              </div>
-            </div>
-          </div>
+            )}
+          </QueryWrapper>
         </DashboardCard>
       </div>
     </div>

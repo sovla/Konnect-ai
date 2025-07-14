@@ -7,6 +7,7 @@ import {
   getAnnouncements,
   getAnalytics,
 } from '../apis';
+import { AIPredictionType } from '@/app/types';
 
 // Query Keys 상수 정의
 export const QUERY_KEYS = {
@@ -52,8 +53,8 @@ export const useRiderProfile = () => {
   });
 };
 
-// AI 예측 데이터 조회
-export const useAIPredictions = (type?: 'predictions' | 'heatmap' | 'hourly') => {
+// AI 예측 데이터 조회 - 조건부 타입으로 타입 안전성 보장
+export const useAIPredictions = <T extends AIPredictionType | undefined>(type?: T) => {
   return useQuery({
     queryKey: [QUERY_KEYS.AI_PREDICTIONS, type],
     queryFn: () => getAIPredictions(type),

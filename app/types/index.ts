@@ -151,3 +151,13 @@ export interface MonthlyAnalysis {
   };
   dayOfWeekStats: DayOfWeekStat[];
 }
+
+export type AIPredictionType = 'predictions' | 'heatmap' | 'hourly';
+
+export type AIPredictionResponse<T extends AIPredictionType | undefined> = T extends 'predictions'
+  ? ApiResponse<AIPrediction[]>
+  : T extends 'heatmap'
+  ? ApiResponse<HeatmapData[]>
+  : T extends 'hourly'
+  ? ApiResponse<HourlyPrediction[]>
+  : ApiResponse<AIPrediction[]>;
