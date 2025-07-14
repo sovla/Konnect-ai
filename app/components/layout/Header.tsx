@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Bell, Settings, User, Menu } from 'lucide-react';
+import { Bell, Settings, User, Menu, LogOut, Loader2 } from 'lucide-react';
+import { useAuth, useNotifications } from '../../hooks';
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -11,6 +12,17 @@ interface HeaderProps {
 export default function Header({ onMenuClick, isMobile = false }: HeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+
+  // 인증 및 알림 훅 사용
+  const { user, riderInfo, logout, isLoggingOut } = useAuth();
+  const { notifications, unreadCount } = useNotifications();
+
+  const handleLogout = () => {
+    if (window.confirm('정말 로그아웃하시겠습니까?')) {
+      logout();
+    }
+    setShowProfile(false);
+  };
 
   return (
     <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm">
@@ -33,9 +45,17 @@ export default function Header({ onMenuClick, isMobile = false }: HeaderProps) {
 
       <div className="flex items-center gap-3">
         {/* 현재 상태 표시 */}
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-green-100 rounded-full">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <span className="text-sm font-medium text-green-700">온라인</span>
+        <div
+          className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full ${
+            riderInfo?.isOnline ? 'bg-green-100' : 'bg-gray-100'
+          }`}
+        >
+          <div
+            className={`w-2 h-2 rounded-full ${riderInfo?.isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}
+          ></div>
+          <span className={`text-sm font-medium ${riderInfo?.isOnline ? 'text-green-700' : 'text-gray-600'}`}>
+            {riderInfo?.isOnline ? '온라인' : '오프라인'}
+          </span>
         </div>
 
         {/* 알림 */}
@@ -45,9 +65,11 @@ export default function Header({ onMenuClick, isMobile = false }: HeaderProps) {
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative"
           >
             <Bell className="w-5 h-5 text-gray-600" />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-              3
-            </span>
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
           </button>
 
           {showNotifications && (
@@ -56,27 +78,18 @@ export default function Header({ onMenuClick, isMobile = false }: HeaderProps) {
                 <h3 className="font-semibold text-gray-900">알림</h3>
               </div>
               <div className="p-4 space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900">새로운 프로모션이 시작되었습니다!</p>
-                    <p className="text-xs text-gray-500 mt-1">2분 전</p>
+                {notifications.map((notification) => (
+                  <div key={notification.id} className="flex items-start gap-3">
+                    <div className={`w-2 h-2 bg-${notification.color}-500 rounded-full mt-2`}></div>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-900">{notification.title}</p>
+                      <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900">해운대 지역 콜량 증가 예측</p>
-                    <p className="text-xs text-gray-500 mt-1">10분 전</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900">일일 수익 목표 75% 달성!</p>
-                    <p className="text-xs text-gray-500 mt-1">1시간 전</p>
-                  </div>
-                </div>
+                ))}
+                {notifications.length === 0 && (
+                  <p className="text-sm text-gray-500 text-center py-4">새로운 알림이 없습니다.</p>
+                )}
               </div>
             </div>
           )}
@@ -96,14 +109,19 @@ export default function Header({ onMenuClick, isMobile = false }: HeaderProps) {
             <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
               <User className="w-4 h-4 text-blue-600" />
             </div>
-            <span className="hidden sm:block text-sm font-medium text-gray-700">김딜버</span>
+            <span className="hidden sm:block text-sm font-medium text-gray-700">{user?.name || '사용자'}</span>
           </button>
 
           {showProfile && (
             <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
               <div className="p-4 border-b border-gray-100">
-                <p className="font-semibold text-gray-900">김딜버</p>
-                <p className="text-sm text-gray-500">라이더 ID: DR-001</p>
+                <p className="font-semibold text-gray-900">{user?.name || '사용자'}</p>
+                <p className="text-sm text-gray-500">{riderInfo ? `라이더 ID: ${riderInfo.riderId}` : user?.email}</p>
+                {riderInfo && (
+                  <div className="mt-1 text-xs text-gray-400">
+                    {riderInfo.vehicleType} • 평점 {riderInfo.averageRating}
+                  </div>
+                )}
               </div>
               <div className="p-2">
                 <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded">
@@ -113,8 +131,13 @@ export default function Header({ onMenuClick, isMobile = false }: HeaderProps) {
                   환경 설정
                 </button>
                 <hr className="my-2" />
-                <button className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded">
-                  로그아웃
+                <button
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isLoggingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
+                  {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
                 </button>
               </div>
             </div>

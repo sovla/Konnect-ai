@@ -21,6 +21,9 @@ export { useDebounce, useDebouncedValue } from './useDebounce';
 // 지도 관련 훅들
 export { useMapInteraction } from './useMapInteraction';
 
+// 인증 관련 훅들
+export { useAuth, useNotifications } from './useAuth';
+
 // 향후 추가될 커스텀 훅들을 위한 공간
 // export { useLocalStorage } from './useLocalStorage';
 // export { useWindowSize } from './useWindowSize';
