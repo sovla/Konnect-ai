@@ -17,11 +17,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
+        console.log('🔐 authorize 함수 시작, credentials:', {
+          email: credentials?.email,
+          hasPassword: !!credentials?.password,
+        });
+
         if (!credentials?.email || !credentials?.password) {
+          console.log('❌ credentials 누락');
           return null;
         }
 
         try {
+          console.log('🔍 사용자 조회 시작:', credentials.email);
+
           const user = await prisma.user.findUnique({
             where: {
               email: credentials.email as string,
@@ -31,21 +39,31 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             },
           });
 
+          console.log('👤 사용자 조회 결과:', {
+            found: !!user,
+            hasPassword: !!user?.password,
+            userId: user?.id,
+          });
+
           if (!user) {
+            console.log('❌ 사용자를 찾을 수 없음');
             return null;
           }
 
           if (user.password == null) {
-            // TODO : 추후에 소셜 로그인 추가 시 수정 필요
+            console.log('❌ 사용자 비밀번호가 null');
             return null;
           }
 
           const isPasswordValid = await bcrypt.compare(credentials.password as string, user.password);
+          console.log('🔑 비밀번호 검증 결과:', isPasswordValid);
 
           if (!isPasswordValid) {
+            console.log('❌ 비밀번호 불일치');
             return null;
           }
 
+          console.log('✅ 인증 성공, 사용자 정보 반환');
           return {
             id: user.id,
             email: user.email,
@@ -54,7 +72,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             riderProfile: user.riderProfile,
           };
         } catch (error) {
-          console.error('인증 중 오류 발생:', error);
+          console.error('💥 인증 중 오류 발생:', error);
           return null;
         }
       },

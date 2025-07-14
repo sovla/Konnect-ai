@@ -1,36 +1,28 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../app/generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
-// NextAuth.js 표준 모델들
 model Account {
   id                String  @id @default(cuid())
   userId            String
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@map("accounts")
@@ -55,101 +47,69 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
-// 사용자/라이더 모델
 model User {
-  id            String    @id @default(cuid())
-  name          String    @default("empty")
-  email         String    @unique
+  id            String        @id @default(cuid())
+  name          String        @default("empty")
+  email         String        @unique
   emailVerified DateTime?
   image         String?
   phone         String?
-  password      String? // 이메일/패스워드 로그인용
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  // NextAuth.js 관계
-  accounts Account[]
-  sessions Session[]
-
-  // 라이더 프로필 (1:1 관계)
-  riderProfile RiderProfile?
+  password      String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  accounts      Account[]
+  riderProfile  RiderProfile?
+  sessions      Session[]
 
   @@map("users")
 }
 
-// 라이더 프로필 모델
 model RiderProfile {
-  id     String @id @default(cuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  dailyGoal       Int         @default(80000) // 일일 목표 수익 (원)
-  monthlyGoal     Int         @default(2400000) // 월 목표 수익 (원)
+  id              String      @id @default(cuid())
+  userId          String      @unique
+  dailyGoal       Int         @default(80000)
+  monthlyGoal     Int         @default(2400000)
   joinDate        DateTime    @default(now())
   totalDeliveries Int         @default(0)
   averageRating   Float       @default(0.0)
   acceptanceRate  Float       @default(0.0)
-  avgDeliveryTime Int         @default(0) // 분 단위
-  preferredAreas  String[] // 선호 운행 지역
+  avgDeliveryTime Int         @default(0)
+  preferredAreas  String[]
   vehicleType     VehicleType @default(MOTORCYCLE)
   isOnline        Boolean     @default(false)
-  onlineTime      Int         @default(0) // 오늘 온라인 시간 (분)
-
-  // 관계
-  deliveries Delivery[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  onlineTime      Int         @default(0)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  deliveries      Delivery[]
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("rider_profiles")
 }
 
-// 차량 타입 열거형
-enum VehicleType {
-  MOTORCYCLE
-  BICYCLE
-  CAR
-
-  @@map("vehicle_type")
-}
-
-
-
-// 배달 내역 모델
 model Delivery {
-  id           String       @id @default(cuid())
-  riderId      String
-  riderProfile RiderProfile @relation(fields: [riderId], references: [id], onDelete: Cascade)
-
-  date        DateTime
-  completedAt DateTime
-
-  // 픽업 정보
-  pickupAddress String
-  pickupLat     Float
-  pickupLng     Float
-
-  // 배송 정보  
+  id             String       @id @default(cuid())
+  riderId        String
+  date           DateTime
+  completedAt    DateTime
+  pickupAddress  String
+  pickupLat      Float
+  pickupLng      Float
   dropoffAddress String
   dropoffLat     Float
   dropoffLng     Float
-
-  // 수익 정보
-  baseEarnings  Int // 기본료 (원)
-  promoEarnings Int @default(0) // 프로모션 (원)
-  tipEarnings   Int @default(0) // 팁 (원)
-  totalEarnings Int // 총 수익 (원)
-
-  rating       Float
-  deliveryTime Int // 배달 시간 (분)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  baseEarnings   Int
+  promoEarnings  Int          @default(0)
+  tipEarnings    Int          @default(0)
+  totalEarnings  Int
+  rating         Float
+  deliveryTime   Int
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  riderProfile   RiderProfile @relation(fields: [riderId], references: [id], onDelete: Cascade)
 
   @@map("deliveries")
 }
 
-// 공지사항 모델
 model Announcement {
   id        String           @id @default(cuid())
   title     String
@@ -159,14 +119,91 @@ model Announcement {
   startDate DateTime
   endDate   DateTime
   isActive  Boolean          @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
 
   @@map("announcements")
 }
 
-// 공지사항 타입 열거형
+model AIZone {
+  id              String             @id @default(cuid())
+  name            String
+  coordinates     Json
+  expectedCalls   Int
+  avgFee          Int
+  confidence      Float
+  isActive        Boolean            @default(true)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  recommendations AIRecommendation[]
+  predictions     AIZonePrediction[]
+
+  @@map("ai_zones")
+}
+
+model AIZonePrediction {
+  id             String   @id @default(cuid())
+  zoneId         String
+  hour           Int
+  expectedCalls  Int
+  confidence     Float
+  predictionDate DateTime @default(now())
+  zone           AIZone   @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+
+  @@unique([zoneId, hour, predictionDate])
+  @@map("ai_zone_predictions")
+}
+
+model HeatmapPoint {
+  id           String   @id @default(cuid())
+  lat          Float
+  lng          Float
+  weight       Float
+  recentOrders Int      @default(0)
+  avgWaitTime  Int      @default(0)
+  hourlyTrend  String   @default("stable")
+  timestamp    DateTime @default(now())
+
+  @@map("heatmap_points")
+}
+
+model AIRecommendation {
+  id          String             @id @default(cuid())
+  zoneId      String
+  type        RecommendationType
+  title       String
+  description String
+  impact      Impact             @default(MEDIUM)
+  confidence  Float
+  createdAt   DateTime           @default(now())
+  zone        AIZone             @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+
+  @@map("ai_recommendations")
+}
+
+model PlatformStats {
+  id                  String   @id @default(cuid())
+  date                DateTime @unique
+  avgAcceptanceRate   Float
+  avgDeliveryTime     Int
+  avgDailyEarnings    Int
+  avgMonthlyEarnings  Int
+  avgRating           Float
+  avgDeliveriesPerDay Int
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("platform_stats")
+}
+
+enum VehicleType {
+  MOTORCYCLE
+  BICYCLE
+  CAR
+
+  @@map("vehicle_type")
+}
+
 enum AnnouncementType {
   PROMOTION
   NOTICE
@@ -175,7 +212,6 @@ enum AnnouncementType {
   @@map("announcement_type")
 }
 
-// 우선순위 열거형
 enum Priority {
   HIGH
   MEDIUM
@@ -184,81 +220,6 @@ enum Priority {
   @@map("priority")
 }
 
-// AI 예측 구역 모델
-model AIZone {
-  id            String @id @default(cuid())
-  name          String
-  coordinates   Json // [[lat, lng], [lat, lng], ...] 형태의 다각형 좌표
-  expectedCalls Int
-  avgFee        Int // 평균 배달료 (원)
-  confidence    Float // 신뢰도 (0.0 ~ 1.0)
-
-  // 시간별 예측 데이터
-  predictions AIZonePrediction[]
-
-  // AI 추천 이유
-  recommendations AIRecommendation[]
-
-  // 활성화 상태
-  isActive Boolean @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("ai_zones")
-}
-
-// AI 구역별 시간대 예측 모델
-model AIZonePrediction {
-  id     String @id @default(cuid())
-  zoneId String
-  zone   AIZone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
-
-  hour          Int // 시간 (0~23)
-  expectedCalls Int // 예상 콜 수
-  confidence    Float // 신뢰도
-
-  // 예측 생성 날짜
-  predictionDate DateTime @default(now())
-
-  @@unique([zoneId, hour, predictionDate])
-  @@map("ai_zone_predictions")
-}
-
-// 히트맵 데이터 모델 (실시간 주문 현황)
-model HeatmapPoint {
-  id           String @id @default(cuid())
-  lat          Float
-  lng          Float
-  weight       Float // 가중치 (주문 밀도)
-  recentOrders Int    @default(0)
-  avgWaitTime  Int    @default(0) // 평균 대기시간 (분)
-  hourlyTrend  String @default("stable") // 시간별 트렌드
-
-  // 데이터 생성 시간
-  timestamp DateTime @default(now())
-
-  @@map("heatmap_points")
-}
-
-// AI 추천 이유 모델
-model AIRecommendation {
-  id     String @id @default(cuid())
-  zoneId String
-  zone   AIZone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
-
-  type        RecommendationType
-  title       String
-  description String
-  impact      Impact             @default(MEDIUM)
-  confidence  Float
-
-  createdAt DateTime @default(now())
-
-  @@map("ai_recommendations")
-}
-
-// 추천 타입 열거형
 enum RecommendationType {
   HISTORICAL_DATA
   EVENT
@@ -269,29 +230,10 @@ enum RecommendationType {
   @@map("recommendation_type")
 }
 
-// 영향도 열거형
 enum Impact {
   HIGH
   MEDIUM
   LOW
 
   @@map("impact")
-}
-
-// 플랫폼 평균 통계 모델 (관리자용)
-model PlatformStats {
-  id   String   @id @default(cuid())
-  date DateTime @unique
-
-  avgAcceptanceRate   Float
-  avgDeliveryTime     Int // 분
-  avgDailyEarnings    Int // 원
-  avgMonthlyEarnings  Int // 원
-  avgRating           Float
-  avgDeliveriesPerDay Int
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("platform_stats")
 }

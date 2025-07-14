@@ -19,7 +19,7 @@ async function main() {
     update: {},
     create: {
       email: 'kim.delivery@konnect.ai',
-      password: 'hashedpassword', // 실제로는 bcrypt로 해시된 비밀번호
+      password: '$2b$12$U26p8qB71Z/aitVFsfyVt.GPlo5p0JgDpQCTQSoPygFRalZW.n04q', // 실제로는 bcrypt로 해시된 비밀번호
       name: '김딜버',
       phone: '010-1234-5678',
       riderProfile: {
