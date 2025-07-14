@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import DashboardCard from '@/app/components/common/DashboardCard';
 import { LineChart, DonutChart, BarChart } from '@/app/components/charts';
 import { getAnalytics } from '@/app/apis';
-import { formatCurrency } from '@/app/utils';
+import { formatCurrency, deliveryCountFormatter } from '@/app/utils';
 import { WeeklyStat, MonthlyAnalysis, DayOfWeekStat } from '@/app/types';
 
 type AnalyticsType = 'weekly' | 'monthly';
@@ -143,7 +143,7 @@ function WeeklyAnalytics({ data }: { data: WeeklyStat[] }) {
             index="날짜"
             categories={['배달건수']}
             colors={['emerald-500']}
-            valueFormatter={(value: number) => `${value}건`}
+            valueFormatter={deliveryCountFormatter}
             height="h-80"
           />
         </DashboardCard>

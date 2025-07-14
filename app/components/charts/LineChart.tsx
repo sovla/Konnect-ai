@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { LineChart as TremorLineChart } from '@tremor/react';
+import { convertColorsForTremor, DEFAULT_TREMOR_COLORS, defaultKRWFormatter } from '@/app/utils';
 
 export interface LineChartData {
   [key: string]: string | number;
@@ -23,26 +24,12 @@ export interface LineChartProps {
   className?: string;
 }
 
-// Tremor 권장 색상 - 다크모드에서도 잘 보이는 색상들
-const defaultColors = ['blue', 'emerald', 'violet', 'orange', 'red', 'amber', 'rose', 'green', 'cyan', 'purple'];
-
-const defaultValueFormatter = (value: number) => {
-  if (value >= 10000) {
-    // 만원 이상은 만원 단위로 표시
-    return `${(value / 10000).toFixed(0)}만원`;
-  }
-  return new Intl.NumberFormat('ko-KR', {
-    style: 'currency',
-    currency: 'KRW',
-  }).format(value);
-};
-
 export function LineChart({
   data,
   index,
   categories,
-  colors = defaultColors,
-  valueFormatter = defaultValueFormatter,
+  colors = DEFAULT_TREMOR_COLORS,
+  valueFormatter = defaultKRWFormatter,
   height = 'h-64',
   showLegend = true,
   showTooltip = true,
@@ -52,13 +39,16 @@ export function LineChart({
   yAxisWidth = 100,
   className = '',
 }: LineChartProps) {
+  // 색상 변환 적용
+  const convertedColors = convertColorsForTremor(colors);
+
   return (
     <div className={`w-full ${height} ${className}`}>
       <TremorLineChart
         data={data}
         index={index}
         categories={categories}
-        colors={colors}
+        colors={convertedColors}
         valueFormatter={valueFormatter}
         showLegend={showLegend}
         showTooltip={showTooltip}
@@ -66,7 +56,7 @@ export function LineChart({
         showXAxis={showXAxis}
         showYAxis={showYAxis}
         yAxisWidth={yAxisWidth}
-        className="h-full text-tremor-default dark:text-dark-tremor-content [&_.recharts-line-curve]:stroke-current [&_.recharts-line-curve]:stroke-2"
+        className="h-full text-tremor-default dark:text-dark-tremor-content"
       />
     </div>
   );

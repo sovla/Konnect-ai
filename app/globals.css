@@ -32,6 +32,13 @@ body {
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Tremor 차트 툴팁 스타일링 */
+.recharts-tooltip-wrapper {
+  z-index: 50;
+}
+
+
+
 @theme {
   --animate-hide: hide 150ms cubic-bezier(0.16, 1, 0.3, 1);
   --animate-slide-down-and-fade: slideDownAndFade 150ms cubic-bezier(0.16, 1, 0.3, 1);

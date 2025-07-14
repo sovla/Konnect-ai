@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { DonutChart as TremorDonutChart } from '@tremor/react';
+import { convertColorsForTremor, DEFAULT_TREMOR_COLORS, defaultKRWFormatter } from '@/app/utils';
 
 export interface DonutChartData {
   name: string;
@@ -23,25 +24,12 @@ export interface DonutChartProps {
   className?: string;
 }
 
-// Tremor 권장 색상 - 다크모드에서도 잘 보이는 색상들
-const defaultColors = ['blue', 'emerald', 'violet', 'orange', 'red', 'amber', 'rose', 'green', 'cyan', 'purple'];
-
-const defaultValueFormatter = (value: number) => {
-  if (value >= 10000) {
-    return `${(value / 10000).toFixed(0)}만원`;
-  }
-  return new Intl.NumberFormat('ko-KR', {
-    style: 'currency',
-    currency: 'KRW',
-  }).format(value);
-};
-
 export function DonutChart({
   data,
   category,
   index,
-  colors = defaultColors,
-  valueFormatter = defaultValueFormatter,
+  colors = DEFAULT_TREMOR_COLORS,
+  valueFormatter = defaultKRWFormatter,
   height = 'h-64',
   variant = 'donut',
   showLabel = true,
@@ -49,6 +37,9 @@ export function DonutChart({
   showAnimation = true,
   className = '',
 }: DonutChartProps) {
+  // 색상 변환 적용
+  const convertedColors = convertColorsForTremor(colors);
+
   return (
     <div
       className={`w-full ${height} ${className}`}
@@ -62,13 +53,13 @@ export function DonutChart({
         data={data}
         category={category}
         index={index}
-        colors={colors}
+        colors={convertedColors}
         valueFormatter={valueFormatter}
         variant={variant}
         showLabel={showLabel}
         showTooltip={showTooltip}
         showAnimation={showAnimation}
-        className="h-full text-tremor-default dark:text-dark-tremor-content [&_.recharts-sector]:fill-current"
+        className="h-full text-tremor-default dark:text-dark-tremor-content"
       />
     </div>
   );

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { BarChart as TremorBarChart } from '@tremor/react';
+import { convertColorsForTremor, DEFAULT_TREMOR_COLORS, defaultKRWFormatter } from '@/app/utils';
 
 export interface BarChartData {
   [key: string]: string | number;
@@ -24,25 +25,12 @@ export interface BarChartProps {
   className?: string;
 }
 
-// Tremor 권장 색상 - 다크모드에서도 잘 보이는 색상들
-const defaultColors = ['blue', 'emerald', 'violet', 'orange', 'red', 'amber', 'rose', 'green', 'cyan', 'purple'];
-
-const defaultValueFormatter = (value: number) => {
-  if (value >= 10000) {
-    return `${(value / 10000).toFixed(0)}만원`;
-  }
-  return new Intl.NumberFormat('ko-KR', {
-    style: 'currency',
-    currency: 'KRW',
-  }).format(value);
-};
-
 export function BarChart({
   data,
   index,
   categories,
-  colors = defaultColors,
-  valueFormatter = defaultValueFormatter,
+  colors = DEFAULT_TREMOR_COLORS,
+  valueFormatter = defaultKRWFormatter,
   height = 'h-64',
   layout = 'vertical',
   showLegend = true,
@@ -53,6 +41,9 @@ export function BarChart({
   yAxisWidth = 100,
   className = '',
 }: BarChartProps) {
+  // 색상 변환 적용
+  const convertedColors = convertColorsForTremor(colors);
+
   return (
     <div
       className={`w-full ${height} ${className}`}
@@ -66,7 +57,7 @@ export function BarChart({
         data={data}
         index={index}
         categories={categories}
-        colors={colors}
+        colors={convertedColors}
         valueFormatter={valueFormatter}
         layout={layout}
         showLegend={showLegend}
@@ -75,7 +66,7 @@ export function BarChart({
         showXAxis={showXAxis}
         showYAxis={showYAxis}
         yAxisWidth={yAxisWidth}
-        className="h-full text-tremor-default dark:text-dark-tremor-content [&_.recharts-bar]:fill-current"
+        className="h-full text-tremor-default dark:text-dark-tremor-content"
       />
     </div>
   );
