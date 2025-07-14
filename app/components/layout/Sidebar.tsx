@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Map, BarChart3, History, Settings, HelpCircle, X } from 'lucide-react';
+import { LayoutDashboard, Map, BarChart3, History, Settings, X } from 'lucide-react';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -50,13 +50,13 @@ const bottomMenuItems = [
     href: '/settings',
     description: '앱 설정 및 환경설정',
   },
-  {
-    id: 'help',
-    label: '도움말',
-    icon: HelpCircle,
-    href: '/help',
-    description: '사용법과 자주 묻는 질문',
-  },
+  // {
+  //   id: 'help',
+  //   label: '도움말',
+  //   icon: HelpCircle,
+  //   href: '/help',
+  //   description: '사용법과 자주 묻는 질문',
+  // },
 ];
 
 export default function Sidebar({ isOpen = true, onClose, isMobile = false }: SidebarProps) {
