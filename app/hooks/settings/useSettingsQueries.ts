@@ -1,6 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { RiderStatsResponse, GetRiderSettingsResponse, RiderProfileResponse } from '@/app/api/settings/rider/route';
-import { Theme, Language } from '@/app/generated/prisma';
+import {
+  RiderSettingsResponse,
+  ProfileResponse,
+  UserSettingsResponse,
+  type UpdateProfileRequest,
+  type UpdateRiderSettingsRequest,
+  type UpdateUserSettingsRequest,
+  type DeleteAccountRequest,
+  type UserProfile,
+  type UserSettings,
+} from '@/app/types/dto';
 
 // Query Keys
 export const SETTINGS_QUERY_KEYS = {
@@ -12,42 +21,6 @@ export const SETTINGS_QUERY_KEYS = {
   SETTINGS_OVERVIEW: 'settingsOverview',
 } as const;
 
-// 타입 정의
-export interface UserProfile {
-  id: string;
-  name: string;
-  email: string;
-  phone: string | null;
-  createdAt: string;
-}
-
-// API 응답 타입을 그대로 사용 (타입 안정성 향상)
-export type RiderStats = RiderStatsResponse;
-
-export interface AccountStats {
-  totalDeliveries: number;
-  totalEarnings: number;
-  memberSince: string;
-  lastLoginAt: string;
-}
-
-export interface UserSettings {
-  id: string;
-  theme: Theme;
-  language: Language;
-  mapDefaultZoom: number;
-  mapDefaultLat: number;
-  mapDefaultLng: number;
-  mapTrafficLayer: boolean;
-  mapTransitLayer: boolean;
-  privacyAccepted: boolean;
-  termsAccepted: boolean;
-  privacyDate?: string | null;
-  termsDate?: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
 // 사용자 프로필 조회 (프로필 설정 페이지)
 export const useUserProfile = () => {
   return useQuery({
@@ -57,9 +30,8 @@ export const useUserProfile = () => {
       if (!response.ok) {
         throw new Error('프로필을 불러오는데 실패했습니다.');
       }
-      const data = await response.json();
-      console.log(data);
-      return data.profile as UserProfile;
+      const data: ProfileResponse = await response.json();
+      return data.data?.user;
     },
   });
 };
@@ -73,8 +45,8 @@ export const useRiderStats = () => {
       if (!response.ok) {
         throw new Error('통계를 불러오는데 실패했습니다.');
       }
-      const data: GetRiderSettingsResponse = await response.json();
-      return data.riderStats;
+      const data: RiderSettingsResponse = await response.json();
+      return data.data?.riderStats;
     },
   });
 };
@@ -89,7 +61,7 @@ export const useAccountStats = () => {
         throw new Error('계정 통계를 불러오는데 실패했습니다.');
       }
       const data = await response.json();
-      return data.stats as AccountStats;
+      return data.data?.stats;
     },
   });
 };
@@ -103,8 +75,8 @@ export const useAppSettings = () => {
       if (!response.ok) {
         throw new Error('앱 설정을 불러오는데 실패했습니다.');
       }
-      const data = await response.json();
-      return data.userSettings as UserSettings;
+      const data: UserSettingsResponse = await response.json();
+      return data.data?.userSettings;
     },
   });
 };
@@ -118,8 +90,8 @@ export const useRiderSettings = () => {
       if (!response.ok) {
         throw new Error('라이더 설정을 불러오는데 실패했습니다.');
       }
-      const data: GetRiderSettingsResponse = await response.json();
-      return data.riderProfile;
+      const data: RiderSettingsResponse = await response.json();
+      return data.data?.riderProfile;
     },
   });
 };
@@ -145,7 +117,7 @@ export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Partial<UserProfile>) => {
+    mutationFn: async (data: UpdateProfileRequest) => {
       const response = await fetch('/api/settings/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -170,7 +142,7 @@ export const useUpdateProfile = () => {
 // 계정 삭제
 export const useDeleteAccount = () => {
   return useMutation({
-    mutationFn: async (data: { password: string; confirmText: string }) => {
+    mutationFn: async (data: DeleteAccountRequest) => {
       const response = await fetch('/api/settings/account', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
@@ -192,7 +164,7 @@ export const useUpdateAppSettings = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Partial<UserSettings>) => {
+    mutationFn: async (data: UpdateUserSettingsRequest) => {
       const response = await fetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -218,7 +190,7 @@ export const useUpdateRiderSettings = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Partial<RiderProfileResponse>) => {
+    mutationFn: async (data: UpdateRiderSettingsRequest) => {
       const response = await fetch('/api/settings/rider', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -240,3 +212,6 @@ export const useUpdateRiderSettings = () => {
     },
   });
 };
+
+// 기존 타입들 (호환성을 위해 재내보내기)
+export type { UserProfile, UserSettings };

@@ -1,69 +1,11 @@
 import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
-import { prisma } from '@/app/lib/prisma';
-import { VehicleType } from '@/app/generated/prisma';
-import { z } from 'zod';
-
-// zod 스키마 정의
-const WorkingHoursSchema = z.object({
-  start: z.number().min(0).max(23),
-  end: z.number().min(0).max(23),
-});
-
-const UpdateRiderSettingsSchema = z.object({
-  // 기본 목표 설정
-  dailyGoal: z.number().min(0).optional(),
-  monthlyGoal: z.number().min(0).optional(),
-
-  // 운행 관련 설정
-  preferredAreas: z.array(z.string()).optional(),
-  vehicleType: z.nativeEnum(VehicleType).optional(),
-  minOrderAmount: z.number().min(0).optional(),
-  workingHours: WorkingHoursSchema.optional(),
-  maxDistance: z.number().min(1).max(50).optional(),
-  autoAccept: z.boolean().optional(),
-
-  // 알림 설정
-  pushNewOrder: z.boolean().optional(),
-  pushGoalAchieve: z.boolean().optional(),
-  pushPromotion: z.boolean().optional(),
-  emailSummary: z.boolean().optional(),
-  emailMarketing: z.boolean().optional(),
-});
-
-// API 응답 타입 정의
-export interface RiderProfileResponse {
-  id: string;
-  dailyGoal: number;
-  monthlyGoal: number;
-  preferredAreas: string[];
-  vehicleType: VehicleType;
-  minOrderAmount: number;
-  workingHours: { start: number; end: number };
-  maxDistance: number;
-  autoAccept: boolean;
-  pushNewOrder: boolean;
-  pushGoalAchieve: boolean;
-  pushPromotion: boolean;
-  emailSummary: boolean;
-  emailMarketing: boolean;
-}
-
-export interface RiderStatsResponse {
-  totalDeliveries: number;
-  totalEarnings: number;
-  averageRating: number;
-  acceptanceRate: number;
-  avgDeliveryTime: number;
-  onlineTime: number;
-  isOnline: boolean;
-}
-
-export interface GetRiderSettingsResponse {
-  riderProfile: RiderProfileResponse;
-  riderStats: RiderStatsResponse;
-  message: string;
-}
+import { prisma, VehicleType } from '@/app/lib/prisma';
+import {
+  UpdateRiderSettingsRequestSchema,
+  RiderSettingsResponseSchema,
+  type RiderSettingsResponse,
+} from '@/app/types/dto';
 
 // GET /api/settings/rider - 라이더 설정 조회
 export async function GET() {
@@ -117,36 +59,41 @@ export async function GET() {
     const totalEarnings = earningsAggregation._sum.totalEarnings || 0;
 
     // 응답 데이터 구성
-    const responseData: GetRiderSettingsResponse = {
-      riderProfile: {
-        id: riderProfile.id,
-        dailyGoal: riderProfile.dailyGoal,
-        monthlyGoal: riderProfile.monthlyGoal,
-        preferredAreas: riderProfile.preferredAreas,
-        vehicleType: riderProfile.vehicleType,
-        minOrderAmount: riderProfile.minOrderAmount,
-        workingHours: riderProfile.workingHours as { start: number; end: number },
-        maxDistance: riderProfile.maxDistance,
-        autoAccept: riderProfile.autoAccept,
-        pushNewOrder: riderProfile.pushNewOrder,
-        pushGoalAchieve: riderProfile.pushGoalAchieve,
-        pushPromotion: riderProfile.pushPromotion,
-        emailSummary: riderProfile.emailSummary,
-        emailMarketing: riderProfile.emailMarketing,
-      },
-      riderStats: {
-        totalDeliveries: riderProfile.totalDeliveries,
-        totalEarnings,
-        averageRating: riderProfile.averageRating,
-        acceptanceRate: riderProfile.acceptanceRate,
-        avgDeliveryTime: riderProfile.avgDeliveryTime,
-        onlineTime: riderProfile.onlineTime,
-        isOnline: riderProfile.isOnline,
-      },
+    const responseData: RiderSettingsResponse = {
+      success: true,
       message: '라이더 설정을 조회했습니다.',
+      data: {
+        riderProfile: {
+          id: riderProfile.id,
+          dailyGoal: riderProfile.dailyGoal,
+          monthlyGoal: riderProfile.monthlyGoal,
+          preferredAreas: riderProfile.preferredAreas,
+          vehicleType: riderProfile.vehicleType,
+          minOrderAmount: riderProfile.minOrderAmount,
+          workingHours: riderProfile.workingHours as { start: number; end: number },
+          maxDistance: riderProfile.maxDistance,
+          autoAccept: riderProfile.autoAccept,
+          pushNewOrder: riderProfile.pushNewOrder,
+          pushGoalAchieve: riderProfile.pushGoalAchieve,
+          pushPromotion: riderProfile.pushPromotion,
+          emailSummary: riderProfile.emailSummary,
+          emailMarketing: riderProfile.emailMarketing,
+        },
+        riderStats: {
+          totalDeliveries: riderProfile.totalDeliveries,
+          totalEarnings,
+          averageRating: riderProfile.averageRating,
+          acceptanceRate: riderProfile.acceptanceRate,
+          avgDeliveryTime: riderProfile.avgDeliveryTime,
+          onlineTime: riderProfile.onlineTime,
+          isOnline: riderProfile.isOnline,
+        },
+      },
     };
 
-    return Response.json(responseData);
+    // 응답 검증
+    const validatedResponse = RiderSettingsResponseSchema.parse(responseData);
+    return Response.json(validatedResponse);
   } catch (error) {
     console.error('라이더 설정 조회 실패:', error);
     return Response.json({ error: '라이더 설정 조회에 실패했습니다.' }, { status: 500 });
@@ -165,7 +112,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
 
     // zod validation
-    const validationResult = UpdateRiderSettingsSchema.safeParse(body);
+    const validationResult = UpdateRiderSettingsRequestSchema.safeParse(body);
     if (!validationResult.success) {
       return Response.json(
         {

@@ -1,21 +1,7 @@
 import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
-import { prisma } from '@/app/lib/prisma';
-import { z } from 'zod';
-
-// zod 스키마 정의
-const UpdateProfileSchema = z.object({
-  name: z.string().min(1, '이름을 입력해주세요.').max(50, '이름은 최대 50자까지 가능합니다.').optional(),
-  email: z
-    .email({ message: '올바른 이메일 형식을 입력해주세요.' })
-    .max(255, '이메일은 최대 255자까지 가능합니다.')
-    .optional(),
-  phone: z
-    .string()
-    .regex(/^010-\d{4}-\d{4}$/, '올바른 전화번호 형식을 입력해주세요. (예: 010-1234-5678)')
-    .optional()
-    .nullable(),
-});
+import { prisma, RiderProfile } from '@/app/lib/prisma';
+import { UpdateProfileRequestSchema, ProfileResponseSchema, type ProfileResponse } from '@/app/types/dto';
 
 // GET /api/settings/profile - 사용자 프로필 조회
 export async function GET() {
@@ -23,7 +9,13 @@ export async function GET() {
     const session = await auth();
 
     if (!session?.user?.id) {
-      return Response.json({ error: '인증이 필요합니다.' }, { status: 401 });
+      return Response.json(
+        {
+          success: false,
+          error: '인증이 필요합니다.',
+        },
+        { status: 401 },
+      );
     }
 
     // 사용자 프로필 조회
@@ -50,16 +42,44 @@ export async function GET() {
     });
 
     if (!user) {
-      return Response.json({ error: '사용자를 찾을 수 없습니다.' }, { status: 404 });
+      return Response.json(
+        {
+          success: false,
+          error: '사용자를 찾을 수 없습니다.',
+        },
+        { status: 404 },
+      );
     }
 
-    return Response.json({
-      user,
+    const responseData: ProfileResponse = {
+      success: true,
       message: '사용자 프로필을 조회했습니다.',
-    });
+      data: {
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          emailVerified: user.emailVerified,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+          riderProfile: user.riderProfile as RiderProfile,
+        },
+      },
+    };
+
+    // 응답 검증
+    const validatedResponse = ProfileResponseSchema.parse(responseData);
+    return Response.json(validatedResponse);
   } catch (error) {
     console.error('사용자 프로필 조회 실패:', error);
-    return Response.json({ error: '사용자 프로필 조회에 실패했습니다.' }, { status: 500 });
+    return Response.json(
+      {
+        success: false,
+        error: '사용자 프로필 조회에 실패했습니다.',
+      },
+      { status: 500 },
+    );
   }
 }
 
@@ -69,16 +89,23 @@ export async function PUT(request: NextRequest) {
     const session = await auth();
 
     if (!session?.user?.id) {
-      return Response.json({ error: '인증이 필요합니다.' }, { status: 401 });
+      return Response.json(
+        {
+          success: false,
+          error: '인증이 필요합니다.',
+        },
+        { status: 401 },
+      );
     }
 
     const body = await request.json();
 
     // zod validation
-    const validationResult = UpdateProfileSchema.safeParse(body);
+    const validationResult = UpdateProfileRequestSchema.safeParse(body);
     if (!validationResult.success) {
       return Response.json(
         {
+          success: false,
           error: '잘못된 요청 데이터입니다.',
           details: validationResult.error.issues,
         },
@@ -86,46 +113,38 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const { name, email, phone } = validationResult.data;
+    const updateData = validationResult.data;
 
-    // 사용자 존재 확인
+    // 기존 사용자 조회
     const existingUser = await prisma.user.findUnique({
       where: { id: session.user.id },
     });
 
     if (!existingUser) {
-      return Response.json({ error: '사용자를 찾을 수 없습니다.' }, { status: 404 });
+      return Response.json(
+        {
+          success: false,
+          error: '사용자를 찾을 수 없습니다.',
+        },
+        { status: 404 },
+      );
     }
 
-    // 이메일 중복 확인 (현재 사용자 제외)
-    if (email && email !== existingUser.email) {
-      const emailExists = await prisma.user.findFirst({
-        where: {
-          email: email,
-          id: { not: session.user.id },
-        },
+    // 이메일 변경 시 중복 검사
+    if (updateData.email && updateData.email !== existingUser.email) {
+      const emailExists = await prisma.user.findUnique({
+        where: { email: updateData.email },
       });
 
       if (emailExists) {
-        return Response.json({ error: '이미 사용 중인 이메일입니다.' }, { status: 400 });
+        return Response.json(
+          {
+            success: false,
+            error: '이미 사용 중인 이메일 주소입니다.',
+          },
+          { status: 409 },
+        );
       }
-    }
-
-    // 업데이트할 데이터 준비
-    const updateData: Partial<{
-      name: string;
-      email: string;
-      phone: string | null;
-      emailVerified: Date | null;
-    }> = {};
-
-    if (name !== undefined) updateData.name = name;
-    if (phone !== undefined) updateData.phone = phone;
-
-    // 이메일이 변경되면 이메일 인증 상태를 초기화
-    if (email !== undefined && email !== existingUser.email) {
-      updateData.email = email;
-      updateData.emailVerified = null;
     }
 
     // 사용자 프로필 업데이트
@@ -141,17 +160,48 @@ export async function PUT(request: NextRequest) {
         email: true,
         phone: true,
         emailVerified: true,
+        createdAt: true,
         updatedAt: true,
+        riderProfile: {
+          select: {
+            joinDate: true,
+            totalDeliveries: true,
+            averageRating: true,
+            acceptanceRate: true,
+            vehicleType: true,
+          },
+        },
       },
     });
 
-    return Response.json({
-      user: updatedUser,
-      message: '사용자 프로필이 업데이트되었습니다.',
-      emailChanged: email !== undefined && email !== existingUser.email,
-    });
+    const responseData: ProfileResponse = {
+      success: true,
+      message: '프로필이 업데이트되었습니다.',
+      data: {
+        user: {
+          id: updatedUser.id,
+          name: updatedUser.name,
+          email: updatedUser.email,
+          phone: updatedUser.phone,
+          emailVerified: updatedUser.emailVerified,
+          createdAt: updatedUser.createdAt,
+          updatedAt: updatedUser.updatedAt,
+          riderProfile: updatedUser.riderProfile as RiderProfile,
+        },
+      },
+    };
+
+    // 응답 검증
+    const validatedResponse = ProfileResponseSchema.parse(responseData);
+    return Response.json(validatedResponse);
   } catch (error) {
-    console.error('사용자 프로필 업데이트 실패:', error);
-    return Response.json({ error: '사용자 프로필 업데이트에 실패했습니다.' }, { status: 500 });
+    console.error('프로필 업데이트 실패:', error);
+    return Response.json(
+      {
+        success: false,
+        error: '프로필 업데이트에 실패했습니다.',
+      },
+      { status: 500 },
+    );
   }
 }
