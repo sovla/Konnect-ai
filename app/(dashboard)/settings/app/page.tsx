@@ -1,21 +1,14 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Save, Palette, Globe, Map, Shield, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 
-import { appSettingsSchema, type AppSettingsFormData } from '@/app/lib/schemas';
-
-interface AppSettings extends AppSettingsFormData {
-  id: string;
-  privacyAccepted: boolean;
-  termsAccepted: boolean;
-  privacyDate: string | null;
-  termsDate: string | null;
-}
+import { useAppSettings, useUpdateAppSettings } from '@/app/hooks';
+import { UpdateUserSettingsRequestSchema, type UpdateUserSettingsRequest } from '@/app/types/dto';
+import { QueryWrapper } from '@/app/components/common/DataWrapper';
 
 const themeOptions = [
   { value: 'LIGHT' as const, label: '라이트 모드', description: '밝은 테마' },
@@ -29,11 +22,13 @@ const languageOptions = [
 ];
 
 export default function AppSettingsPage() {
-  const queryClient = useQueryClient();
+  // 설정 훅들 사용
+  const appSettingsQuery = useAppSettings();
+  const updateSettingsMutation = useUpdateAppSettings();
 
   // React Hook Form 설정
-  const form = useForm<AppSettingsFormData>({
-    resolver: zodResolver(appSettingsSchema),
+  const form = useForm<UpdateUserSettingsRequest>({
+    resolver: zodResolver(UpdateUserSettingsRequestSchema),
     mode: 'onChange',
     defaultValues: {
       theme: 'LIGHT',
@@ -59,37 +54,10 @@ export default function AppSettingsPage() {
   const language = watch('language');
   const mapDefaultZoom = watch('mapDefaultZoom');
 
-  // 앱 설정 조회
-  const { data: settings, isLoading } = useQuery({
-    queryKey: ['app-settings'],
-    queryFn: async () => {
-      const response = await fetch('/api/settings');
-      if (!response.ok) {
-        throw new Error('앱 설정을 불러오는데 실패했습니다.');
-      }
-      return response.json() as Promise<AppSettings>;
-    },
-  });
-
-  // 설정 업데이트 뮤테이션
-  const updateSettingsMutation = useMutation({
-    mutationFn: async (data: Partial<AppSettingsFormData>) => {
-      const response = await fetch('/api/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || '설정 업데이트에 실패했습니다.');
-      }
-      return response.json();
-    },
-  });
-
   // 설정 데이터 로드 시 폼 초기화
   useEffect(() => {
-    if (settings) {
+    if (appSettingsQuery.data) {
+      const settings = appSettingsQuery.data;
       reset({
         theme: settings.theme,
         language: settings.language,
@@ -100,33 +68,17 @@ export default function AppSettingsPage() {
         mapTransitLayer: settings.mapTransitLayer,
       });
     }
-  }, [settings, reset]);
+  }, [appSettingsQuery.data, reset]);
 
   // 폼 제출 처리
-  const onSubmit = async (data: AppSettingsFormData) => {
+  const onSubmit = async (data: UpdateUserSettingsRequest) => {
     try {
       await updateSettingsMutation.mutateAsync(data);
-      await queryClient.invalidateQueries({ queryKey: ['app-settings'] });
       reset(data); // 성공 시 dirty 상태 초기화
     } catch (error) {
       console.error('설정 저장 실패:', error);
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="max-w-4xl mx-auto p-6 space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
-          <div className="space-y-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-16 bg-gray-100 rounded"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
@@ -148,214 +100,241 @@ export default function AppSettingsPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* 테마 설정 */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <Palette className="w-5 h-5 text-purple-600" />
-            <h2 className="text-lg font-medium text-gray-900">테마 설정</h2>
-          </div>
-
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">앱의 외관을 선택하세요</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {themeOptions.map((option) => (
-                <div key={option.value} className="relative">
-                  <input
-                    type="radio"
-                    id={`theme-${option.value}`}
-                    value={option.value}
-                    {...register('theme')}
-                    className="sr-only"
-                  />
-                  <label
-                    htmlFor={`theme-${option.value}`}
-                    className={`block p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                      theme === option.value ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="font-medium text-gray-900">{option.label}</div>
-                    <div className="text-sm text-gray-500">{option.description}</div>
-                  </label>
-                </div>
+      {/* 데이터 래퍼로 로딩/에러 처리 */}
+      <QueryWrapper
+        query={appSettingsQuery}
+        loadingMessage="앱 설정을 불러오는 중..."
+        errorMessage="앱 설정을 불러오는데 실패했습니다"
+        loadingSkeleton={
+          <div className="animate-pulse space-y-6">
+            <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+            <div className="space-y-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-16 bg-gray-100 rounded"></div>
               ))}
             </div>
-            {errors.theme && <p className="mt-1 text-sm text-red-600">{errors.theme.message}</p>}
           </div>
-        </div>
+        }
+      >
+        {(settings) => (
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* 테마 설정 */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <Palette className="w-5 h-5 text-purple-600" />
+                <h2 className="text-lg font-medium text-gray-900">테마 설정</h2>
+              </div>
 
-        {/* 언어 설정 */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <Globe className="w-5 h-5 text-blue-600" />
-            <h2 className="text-lg font-medium text-gray-900">언어 설정</h2>
-          </div>
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">앱의 외관을 선택하세요</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {themeOptions.map((option) => (
+                    <div key={option.value} className="relative">
+                      <input
+                        type="radio"
+                        id={`theme-${option.value}`}
+                        value={option.value}
+                        {...register('theme')}
+                        className="sr-only"
+                      />
+                      <label
+                        htmlFor={`theme-${option.value}`}
+                        className={`block p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                          theme === option.value
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="font-medium text-gray-900">{option.label}</div>
+                        <div className="text-sm text-gray-500">{option.description}</div>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+                {errors.theme && <p className="mt-1 text-sm text-red-600">{errors.theme.message}</p>}
+              </div>
+            </div>
 
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">앱에서 사용할 언어를 선택하세요</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {languageOptions.map((option) => (
-                <div key={option.value} className="relative">
+            {/* 언어 설정 */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <Globe className="w-5 h-5 text-blue-600" />
+                <h2 className="text-lg font-medium text-gray-900">언어 설정</h2>
+              </div>
+
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">앱에서 사용할 언어를 선택하세요</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {languageOptions.map((option) => (
+                    <div key={option.value} className="relative">
+                      <input
+                        type="radio"
+                        id={`language-${option.value}`}
+                        value={option.value}
+                        {...register('language')}
+                        className="sr-only"
+                      />
+                      <label
+                        htmlFor={`language-${option.value}`}
+                        className={`block p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                          language === option.value
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="font-medium text-gray-900">{option.label}</div>
+                        <div className="text-sm text-gray-500">{option.description}</div>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+                {errors.language && <p className="mt-1 text-sm text-red-600">{errors.language.message}</p>}
+              </div>
+            </div>
+
+            {/* 지도 설정 */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <Map className="w-5 h-5 text-green-600" />
+                <h2 className="text-lg font-medium text-gray-900">지도 설정</h2>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">기본 줌 레벨</label>
                   <input
-                    type="radio"
-                    id={`language-${option.value}`}
-                    value={option.value}
-                    {...register('language')}
-                    className="sr-only"
+                    type="range"
+                    min="8"
+                    max="18"
+                    {...register('mapDefaultZoom', { valueAsNumber: true })}
+                    className="w-full"
                   />
-                  <label
-                    htmlFor={`language-${option.value}`}
-                    className={`block p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                      language === option.value ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="font-medium text-gray-900">{option.label}</div>
-                    <div className="text-sm text-gray-500">{option.description}</div>
-                  </label>
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>8 (전체)</span>
+                    <span>{mapDefaultZoom}</span>
+                    <span>18 (상세)</span>
+                  </div>
+                  {errors.mapDefaultZoom && (
+                    <p className="mt-1 text-sm text-red-600">{errors.mapDefaultZoom.message}</p>
+                  )}
                 </div>
-              ))}
-            </div>
-            {errors.language && <p className="mt-1 text-sm text-red-600">{errors.language.message}</p>}
-          </div>
-        </div>
 
-        {/* 지도 설정 */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <Map className="w-5 h-5 text-green-600" />
-            <h2 className="text-lg font-medium text-gray-900">지도 설정</h2>
-          </div>
-
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">기본 줌 레벨</label>
-              <input
-                type="range"
-                min="8"
-                max="18"
-                {...register('mapDefaultZoom', { valueAsNumber: true })}
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>8 (전체)</span>
-                <span>{mapDefaultZoom}</span>
-                <span>18 (상세)</span>
-              </div>
-              {errors.mapDefaultZoom && <p className="mt-1 text-sm text-red-600">{errors.mapDefaultZoom.message}</p>}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">기본 위도</label>
-                <input
-                  type="number"
-                  step="0.0001"
-                  {...register('mapDefaultLat', { valueAsNumber: true })}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.mapDefaultLat ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                  placeholder="37.5665"
-                />
-                {errors.mapDefaultLat && <p className="mt-1 text-sm text-red-600">{errors.mapDefaultLat.message}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">기본 경도</label>
-                <input
-                  type="number"
-                  step="0.0001"
-                  {...register('mapDefaultLng', { valueAsNumber: true })}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.mapDefaultLng ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                  placeholder="126.9780"
-                />
-                {errors.mapDefaultLng && <p className="mt-1 text-sm text-red-600">{errors.mapDefaultLng.message}</p>}
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-sm font-medium text-gray-900">교통정보 레이어</span>
-                  <p className="text-xs text-gray-500">지도에 실시간 교통정보를 표시합니다</p>
-                </div>
-                <input
-                  type="checkbox"
-                  {...register('mapTrafficLayer')}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-sm font-medium text-gray-900">대중교통 레이어</span>
-                  <p className="text-xs text-gray-500">지하철, 버스 등 대중교통 정보를 표시합니다</p>
-                </div>
-                <input
-                  type="checkbox"
-                  {...register('mapTransitLayer')}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 개인정보 동의 (읽기 전용) */}
-        {settings && (
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <Shield className="w-5 h-5 text-red-600" />
-              <h2 className="text-lg font-medium text-gray-900">개인정보 및 약관</h2>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                <div>
-                  <span className="text-sm font-medium text-gray-900">개인정보 처리방침</span>
-                  <p className="text-xs text-gray-500">
-                    동의 여부: {settings.privacyAccepted ? '동의함' : '미동의'}
-                    {settings.privacyDate && (
-                      <span className="block">동의일: {new Date(settings.privacyDate).toLocaleDateString()}</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">기본 위도</label>
+                    <input
+                      type="number"
+                      step="0.0001"
+                      {...register('mapDefaultLat', { valueAsNumber: true })}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        errors.mapDefaultLat ? 'border-red-300' : 'border-gray-300'
+                      }`}
+                      placeholder="37.5665"
+                    />
+                    {errors.mapDefaultLat && (
+                      <p className="mt-1 text-sm text-red-600">{errors.mapDefaultLat.message}</p>
                     )}
-                  </p>
-                </div>
-                <button type="button" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                  보기
-                </button>
-              </div>
+                  </div>
 
-              <div className="flex items-center justify-between py-3">
-                <div>
-                  <span className="text-sm font-medium text-gray-900">이용약관</span>
-                  <p className="text-xs text-gray-500">
-                    동의 여부: {settings.termsAccepted ? '동의함' : '미동의'}
-                    {settings.termsDate && (
-                      <span className="block">동의일: {new Date(settings.termsDate).toLocaleDateString()}</span>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">기본 경도</label>
+                    <input
+                      type="number"
+                      step="0.0001"
+                      {...register('mapDefaultLng', { valueAsNumber: true })}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        errors.mapDefaultLng ? 'border-red-300' : 'border-gray-300'
+                      }`}
+                      placeholder="126.9780"
+                    />
+                    {errors.mapDefaultLng && (
+                      <p className="mt-1 text-sm text-red-600">{errors.mapDefaultLng.message}</p>
                     )}
-                  </p>
+                  </div>
                 </div>
-                <button type="button" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                  보기
-                </button>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-sm font-medium text-gray-900">교통정보 레이어</span>
+                      <p className="text-xs text-gray-500">지도에 실시간 교통정보를 표시합니다</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      {...register('mapTrafficLayer')}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-sm font-medium text-gray-900">대중교통 레이어</span>
+                      <p className="text-xs text-gray-500">지하철, 버스 등 대중교통 정보를 표시합니다</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      {...register('mapTransitLayer')}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+
+            {/* 개인정보 동의 (읽기 전용) */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <Shield className="w-5 h-5 text-red-600" />
+                <h2 className="text-lg font-medium text-gray-900">개인정보 및 약관</h2>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                  <div>
+                    <span className="text-sm font-medium text-gray-900">개인정보 처리방침</span>
+                    <p className="text-xs text-gray-500">
+                      동의 여부: {settings.privacyAccepted ? '동의함' : '미동의'}
+                      {settings.privacyDate && (
+                        <span className="block">동의일: {new Date(settings.privacyDate).toLocaleDateString()}</span>
+                      )}
+                    </p>
+                  </div>
+                  <button type="button" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                    보기
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between py-3">
+                  <div>
+                    <span className="text-sm font-medium text-gray-900">이용약관</span>
+                    <p className="text-xs text-gray-500">
+                      동의 여부: {settings.termsAccepted ? '동의함' : '미동의'}
+                      {settings.termsDate && (
+                        <span className="block">동의일: {new Date(settings.termsDate).toLocaleDateString()}</span>
+                      )}
+                    </p>
+                  </div>
+                  <button type="button" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                    보기
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 저장 버튼 */}
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={!isDirty || !isValid || updateSettingsMutation.isPending}
+                className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Save className="w-4 h-4" />
+                {updateSettingsMutation.isPending ? '저장 중...' : '변경사항 저장'}
+              </button>
+            </div>
+          </form>
         )}
-
-        {/* 저장 버튼 */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={!isDirty || !isValid || updateSettingsMutation.isPending}
-            className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Save className="w-4 h-4" />
-            {updateSettingsMutation.isPending ? '저장 중...' : '변경사항 저장'}
-          </button>
-        </div>
-      </form>
+      </QueryWrapper>
 
       {/* 에러 메시지 */}
       {updateSettingsMutation.error && (

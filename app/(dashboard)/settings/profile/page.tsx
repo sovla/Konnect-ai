@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 
 import { profileSchema, type ProfileFormData } from '@/app/lib/schemas';
-import { useUserProfile, useRiderStats, useUpdateProfile } from '@/app/hooks';
+import { useUserProfile, useUpdateProfile } from '@/app/hooks';
 
 export default function ProfileSettingsPage() {
   // React Hook Form 설정
@@ -32,7 +32,6 @@ export default function ProfileSettingsPage() {
   const { data: profile, isLoading: profileLoading } = useUserProfile();
 
   // 라이더 통계 조회
-  const { data: stats, isLoading: statsLoading } = useRiderStats();
 
   // 프로필 업데이트 뮤테이션
   const updateProfileMutation = useUpdateProfile();
@@ -58,16 +57,7 @@ export default function ProfileSettingsPage() {
     }
   };
 
-  // 전화번호 포맷팅
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^\d]/g, '');
-    const formattedValue = value.replace(/(\d{3})(\d{4})(\d{4})/, '010-$2-$3');
-    e.target.value = formattedValue;
-  };
-
-  const isLoading = profileLoading || statsLoading;
-
-  if (isLoading) {
+  if (profileLoading) {
     return (
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         <div className="animate-pulse">
@@ -154,7 +144,12 @@ export default function ProfileSettingsPage() {
                   <input
                     type="tel"
                     {...register('phone')}
-                    onChange={handlePhoneChange}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^\d]/g, '');
+                      const formattedValue = value.replace(/(\d{3})(\d{4})(\d{4})/, '010-$2-$3');
+                      e.target.value = formattedValue;
+                      register('phone').onChange(e);
+                    }}
                     className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       errors.phone ? 'border-red-300' : 'border-gray-300'
                     }`}
@@ -166,6 +161,7 @@ export default function ProfileSettingsPage() {
               </div>
 
               {/* 제출 버튼 */}
+
               <div className="flex justify-end">
                 <button
                   type="submit"
@@ -181,51 +177,21 @@ export default function ProfileSettingsPage() {
         </div>
 
         {/* 라이더 통계 */}
-        <div className="space-y-6">
+        <div className="space-y-6 grid grid-rows-1">
           {/* 계정 정보 */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="bg-white rounded-lg border border-gray-200 p-6 h-full">
             <h3 className="text-lg font-medium text-gray-900 mb-4">계정 정보</h3>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-600">가입일</span>
                 <span className="font-medium">{profile ? new Date(profile.createdAt).toLocaleDateString() : '-'}</span>
               </div>
-              <div className="flex justify-between">
+              <div>
                 <span className="text-gray-600">계정 ID</span>
-                <span className="font-medium font-mono text-xs">{profile?.id.slice(0, 8)}...</span>
+                <span className="font-medium font-mono text-xs ">{profile?.id}</span>
               </div>
             </div>
           </div>
-
-          {/* 라이더 통계 */}
-          {stats && (
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">라이더 통계</h3>
-              <div className="space-y-4">
-                <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-900">{stats.totalDeliveries}</div>
-                  <div className="text-sm text-blue-700">총 배달 건수</div>
-                </div>
-
-                <div className="text-center p-3 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-900">{stats.totalEarnings.toLocaleString()}원</div>
-                  <div className="text-sm text-green-700">총 수익</div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="text-center p-3 bg-purple-50 rounded-lg">
-                    <div className="text-lg font-bold text-purple-900">{stats.averageRating.toFixed(1)}</div>
-                    <div className="text-xs text-purple-700">평균 평점</div>
-                  </div>
-
-                  <div className="text-center p-3 bg-orange-50 rounded-lg">
-                    <div className="text-lg font-bold text-orange-900">{stats.acceptanceRate.toFixed(0)}%</div>
-                    <div className="text-xs text-orange-700">수락률</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 

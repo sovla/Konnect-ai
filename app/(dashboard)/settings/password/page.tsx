@@ -1,13 +1,13 @@
 'use client';
 
-import { useMutation } from '@tanstack/react-query';
 import { Save, Lock, Eye, EyeOff, ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 
-import { passwordChangeSchema, type PasswordChangeFormData } from '@/app/lib/schemas';
+import { useChangePassword } from '@/app/hooks';
+import { ChangePasswordRequestSchema, type ChangePasswordRequest } from '@/app/types/dto';
 
 export default function PasswordSettingsPage() {
   const [showPasswords, setShowPasswords] = useState({
@@ -17,8 +17,8 @@ export default function PasswordSettingsPage() {
   });
 
   // React Hook Form 설정
-  const form = useForm<PasswordChangeFormData>({
-    resolver: zodResolver(passwordChangeSchema),
+  const form = useForm<ChangePasswordRequest>({
+    resolver: zodResolver(ChangePasswordRequestSchema),
     mode: 'onChange',
     defaultValues: {
       currentPassword: '',
@@ -39,21 +39,8 @@ export default function PasswordSettingsPage() {
   const newPassword = watch('newPassword');
   const confirmPassword = watch('confirmPassword');
 
-  // 비밀번호 변경 뮤테이션
-  const changePasswordMutation = useMutation({
-    mutationFn: async (data: PasswordChangeFormData) => {
-      const response = await fetch('/api/settings/password', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || '비밀번호 변경에 실패했습니다.');
-      }
-      return response.json();
-    },
-  });
+  // 비밀번호 변경 훅 사용
+  const changePasswordMutation = useChangePassword();
 
   // 비밀번호 강도 체크 함수
   const getPasswordStrength = (password: string) => {
@@ -71,7 +58,7 @@ export default function PasswordSettingsPage() {
     setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
-  const onSubmit = async (data: PasswordChangeFormData) => {
+  const onSubmit = async (data: ChangePasswordRequest) => {
     try {
       await changePasswordMutation.mutateAsync(data);
       reset(); // 성공 시 폼 초기화

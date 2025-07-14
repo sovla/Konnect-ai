@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { User, Truck, Monitor, Key, Trash2, ChevronRight, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { User, Truck, Monitor, Key, Trash2, ChevronRight, CheckCircle, XCircle } from 'lucide-react';
 import { useAppSettings, useRiderSettings, useUserProfile } from '@/app/hooks';
 import { QueryWrapper } from '@/app/components/common/DataWrapper';
 
@@ -251,7 +251,7 @@ export default function SettingsOverviewPage() {
       </div>
 
       {/* 마지막 업데이트 정보 */}
-      <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+      {/* <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
         <div className="flex">
           <div className="flex-shrink-0">
             <Clock className="h-5 w-5 text-blue-400" />
@@ -263,7 +263,7 @@ export default function SettingsOverviewPage() {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

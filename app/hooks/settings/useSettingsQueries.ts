@@ -7,8 +7,10 @@ import {
   type UpdateRiderSettingsRequest,
   type UpdateUserSettingsRequest,
   type DeleteAccountRequest,
+  type ChangePasswordRequest,
   type UserProfile,
   type UserSettings,
+  AccountDeletionInfoResponse,
 } from '@/app/types/dto';
 
 // Query Keys
@@ -60,8 +62,9 @@ export const useAccountStats = () => {
       if (!response.ok) {
         throw new Error('계정 통계를 불러오는데 실패했습니다.');
       }
-      const data = await response.json();
-      return data.data?.stats;
+      const data = (await response.json()) as AccountDeletionInfoResponse;
+      console.log(data);
+      return data.data?.deletionInfo;
     },
   });
 };
@@ -209,6 +212,26 @@ export const useUpdateRiderSettings = () => {
       queryClient.invalidateQueries({ queryKey: [SETTINGS_QUERY_KEYS.RIDER_SETTINGS] });
       queryClient.invalidateQueries({ queryKey: [SETTINGS_QUERY_KEYS.RIDER_STATS] });
       queryClient.invalidateQueries({ queryKey: [SETTINGS_QUERY_KEYS.SETTINGS_OVERVIEW] });
+    },
+  });
+};
+
+// 비밀번호 변경
+export const useChangePassword = () => {
+  return useMutation({
+    mutationFn: async (data: ChangePasswordRequest) => {
+      const response = await fetch('/api/settings/password', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || '비밀번호 변경에 실패했습니다.');
+      }
+
+      return response.json();
     },
   });
 };
