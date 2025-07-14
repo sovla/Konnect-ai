@@ -44,13 +44,7 @@ export default function PasswordSettingsPage() {
 
   // 비밀번호 강도 체크 함수
   const getPasswordStrength = (password: string) => {
-    const checks = [
-      { check: password.length >= 8, text: '최소 8자 이상' },
-      { check: /(?=.*[a-z])/.test(password), text: '소문자 포함' },
-      { check: /(?=.*[A-Z])/.test(password), text: '대문자 포함' },
-      { check: /(?=.*\d)/.test(password), text: '숫자 포함' },
-      { check: /(?=.*[@$!%*?&])/.test(password), text: '특수문자 포함' },
-    ];
+    const checks = [{ check: password.length >= 8, text: '최소 8자 이상' }];
     return checks;
   };
 
@@ -68,7 +62,6 @@ export default function PasswordSettingsPage() {
   };
 
   const passwordStrengthChecks = getPasswordStrength(newPassword || '');
-  const strengthScore = passwordStrengthChecks.filter((check) => check.check).length;
 
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-6">
@@ -149,37 +142,6 @@ export default function PasswordSettingsPage() {
             {/* 비밀번호 강도 표시 */}
             {newPassword && (
               <div className="mt-3 space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-700">비밀번호 강도:</span>
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((level) => (
-                      <div
-                        key={level}
-                        className={`w-4 h-2 rounded-full ${
-                          level <= strengthScore
-                            ? strengthScore <= 2
-                              ? 'bg-red-400'
-                              : strengthScore <= 3
-                              ? 'bg-yellow-400'
-                              : strengthScore <= 4
-                              ? 'bg-blue-400'
-                              : 'bg-green-400'
-                            : 'bg-gray-200'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-xs text-gray-500">
-                    {strengthScore <= 2
-                      ? '약함'
-                      : strengthScore <= 3
-                      ? '보통'
-                      : strengthScore <= 4
-                      ? '강함'
-                      : '매우 강함'}
-                  </span>
-                </div>
-
                 <div className="space-y-1">
                   {passwordStrengthChecks.map((requirement, index) => (
                     <div key={index} className="flex items-center gap-2 text-xs">
@@ -216,7 +178,7 @@ export default function PasswordSettingsPage() {
                 {showPasswords.confirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-            {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>}
+            {/* {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>} */}
 
             {/* 비밀번호 일치 확인 */}
             {confirmPassword && newPassword && (

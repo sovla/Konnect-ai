@@ -162,11 +162,7 @@ export const ChangePasswordRequestSchema = z
     newPassword: z
       .string()
       .min(8, '새 비밀번호는 최소 8자 이상이어야 합니다.')
-      .max(50, '새 비밀번호는 최대 50자까지 가능합니다.')
-      .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
-        '새 비밀번호는 대소문자, 숫자, 특수문자를 포함해야 합니다.',
-      ),
+      .max(50, '새 비밀번호는 최대 50자까지 가능합니다.'),
     confirmPassword: z.string().min(1, '비밀번호 확인을 입력해주세요.'),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
