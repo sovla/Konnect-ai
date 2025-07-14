@@ -1,32 +1,66 @@
 'use client';
 
-import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Save, Lock, Eye, EyeOff, ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useState } from 'react';
 
-interface PasswordChangeData {
-  currentPassword: string;
-  newPassword: string;
-  confirmPassword: string;
-}
+// zod 스키마 정의
+const passwordSchema = z
+  .object({
+    currentPassword: z.string().min(1, '현재 비밀번호를 입력해주세요'),
+    newPassword: z
+      .string()
+      .min(8, '비밀번호는 최소 8자 이상이어야 합니다')
+      .regex(/(?=.*[a-z])/, '소문자를 포함해야 합니다')
+      .regex(/(?=.*[A-Z])/, '대문자를 포함해야 합니다')
+      .regex(/(?=.*\d)/, '숫자를 포함해야 합니다')
+      .regex(/(?=.*[@$!%*?&])/, '특수문자(@$!%*?&)를 포함해야 합니다'),
+    confirmPassword: z.string().min(1, '비밀번호 확인을 입력해주세요'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: '비밀번호가 일치하지 않습니다',
+    path: ['confirmPassword'],
+  });
+
+type PasswordFormData = z.infer<typeof passwordSchema>;
 
 export default function PasswordSettingsPage() {
-  const [formData, setFormData] = useState<PasswordChangeData>({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  });
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
     confirm: false,
   });
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+
+  // React Hook Form 설정
+  const form = useForm<PasswordFormData>({
+    resolver: zodResolver(passwordSchema),
+    mode: 'onChange',
+    defaultValues: {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    },
+  });
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors, isValid },
+  } = form;
+
+  // 실시간으로 비밀번호 값 감시
+  const newPassword = watch('newPassword');
+  const confirmPassword = watch('confirmPassword');
 
   // 비밀번호 변경 뮤테이션
   const changePasswordMutation = useMutation({
-    mutationFn: async (data: PasswordChangeData) => {
+    mutationFn: async (data: PasswordFormData) => {
       const response = await fetch('/api/settings/password', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -40,73 +74,33 @@ export default function PasswordSettingsPage() {
     },
   });
 
-  const validatePassword = (password: string): string[] => {
-    const errors: string[] = [];
-    if (password.length < 8) {
-      errors.push('최소 8자 이상이어야 합니다');
-    }
-    if (!/(?=.*[a-z])/.test(password)) {
-      errors.push('소문자를 포함해야 합니다');
-    }
-    if (!/(?=.*[A-Z])/.test(password)) {
-      errors.push('대문자를 포함해야 합니다');
-    }
-    if (!/(?=.*\d)/.test(password)) {
-      errors.push('숫자를 포함해야 합니다');
-    }
-    if (!/(?=.*[@$!%*?&])/.test(password)) {
-      errors.push('특수문자(@$!%*?&)를 포함해야 합니다');
-    }
-    return errors;
-  };
-
-  const handleInputChange = (field: keyof PasswordChangeData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-
-    // 새 비밀번호 유효성 검사
-    if (field === 'newPassword') {
-      setValidationErrors(validatePassword(value));
-    }
+  // 비밀번호 강도 체크 함수
+  const getPasswordStrength = (password: string) => {
+    const checks = [
+      { check: password.length >= 8, text: '최소 8자 이상' },
+      { check: /(?=.*[a-z])/.test(password), text: '소문자 포함' },
+      { check: /(?=.*[A-Z])/.test(password), text: '대문자 포함' },
+      { check: /(?=.*\d)/.test(password), text: '숫자 포함' },
+      { check: /(?=.*[@$!%*?&])/.test(password), text: '특수문자 포함' },
+    ];
+    return checks;
   };
 
   const togglePasswordVisibility = (field: 'current' | 'new' | 'confirm') => {
     setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // 클라이언트 측 유효성 검사
-    if (formData.newPassword !== formData.confirmPassword) {
-      changePasswordMutation.mutate = async () => {
-        throw new Error('새 비밀번호와 확인 비밀번호가 일치하지 않습니다.');
-      };
-      return;
-    }
-
-    if (validationErrors.length > 0) {
-      return;
-    }
-
+  const onSubmit = async (data: PasswordFormData) => {
     try {
-      await changePasswordMutation.mutateAsync(formData);
-      // 성공 시 폼 초기화
-      setFormData({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
-      });
+      await changePasswordMutation.mutateAsync(data);
+      reset(); // 성공 시 폼 초기화
     } catch (error) {
       console.error('비밀번호 변경 실패:', error);
     }
   };
 
-  const isFormValid =
-    formData.currentPassword &&
-    formData.newPassword &&
-    formData.confirmPassword &&
-    formData.newPassword === formData.confirmPassword &&
-    validationErrors.length === 0;
+  const passwordStrengthChecks = getPasswordStrength(newPassword || '');
+  const strengthScore = passwordStrengthChecks.filter((check) => check.check).length;
 
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-6">
@@ -138,18 +132,18 @@ export default function PasswordSettingsPage() {
           <h2 className="text-lg font-medium text-gray-900">새 비밀번호 설정</h2>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* 현재 비밀번호 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">현재 비밀번호 *</label>
             <div className="relative">
               <input
                 type={showPasswords.current ? 'text' : 'password'}
-                value={formData.currentPassword}
-                onChange={(e) => handleInputChange('currentPassword', e.target.value)}
-                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                {...register('currentPassword')}
+                className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  errors.currentPassword ? 'border-red-300' : 'border-gray-300'
+                }`}
                 placeholder="현재 비밀번호를 입력하세요"
-                required
               />
               <button
                 type="button"
@@ -159,6 +153,7 @@ export default function PasswordSettingsPage() {
                 {showPasswords.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+            {errors.currentPassword && <p className="mt-1 text-sm text-red-600">{errors.currentPassword.message}</p>}
           </div>
 
           {/* 새 비밀번호 */}
@@ -167,11 +162,11 @@ export default function PasswordSettingsPage() {
             <div className="relative">
               <input
                 type={showPasswords.new ? 'text' : 'password'}
-                value={formData.newPassword}
-                onChange={(e) => handleInputChange('newPassword', e.target.value)}
-                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                {...register('newPassword')}
+                className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  errors.newPassword ? 'border-red-300' : 'border-gray-300'
+                }`}
                 placeholder="새 비밀번호를 입력하세요"
-                required
               />
               <button
                 type="button"
@@ -181,19 +176,44 @@ export default function PasswordSettingsPage() {
                 {showPasswords.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+            {errors.newPassword && <p className="mt-1 text-sm text-red-600">{errors.newPassword.message}</p>}
 
             {/* 비밀번호 강도 표시 */}
-            {formData.newPassword && (
+            {newPassword && (
               <div className="mt-3 space-y-2">
-                <div className="text-sm font-medium text-gray-700">비밀번호 요구사항:</div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-700">비밀번호 강도:</span>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((level) => (
+                      <div
+                        key={level}
+                        className={`w-4 h-2 rounded-full ${
+                          level <= strengthScore
+                            ? strengthScore <= 2
+                              ? 'bg-red-400'
+                              : strengthScore <= 3
+                              ? 'bg-yellow-400'
+                              : strengthScore <= 4
+                              ? 'bg-blue-400'
+                              : 'bg-green-400'
+                            : 'bg-gray-200'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs text-gray-500">
+                    {strengthScore <= 2
+                      ? '약함'
+                      : strengthScore <= 3
+                      ? '보통'
+                      : strengthScore <= 4
+                      ? '강함'
+                      : '매우 강함'}
+                  </span>
+                </div>
+
                 <div className="space-y-1">
-                  {[
-                    { check: formData.newPassword.length >= 8, text: '최소 8자 이상' },
-                    { check: /(?=.*[a-z])/.test(formData.newPassword), text: '소문자 포함' },
-                    { check: /(?=.*[A-Z])/.test(formData.newPassword), text: '대문자 포함' },
-                    { check: /(?=.*\d)/.test(formData.newPassword), text: '숫자 포함' },
-                    { check: /(?=.*[@$!%*?&])/.test(formData.newPassword), text: '특수문자 포함' },
-                  ].map((requirement, index) => (
+                  {passwordStrengthChecks.map((requirement, index) => (
                     <div key={index} className="flex items-center gap-2 text-xs">
                       {requirement.check ? (
                         <CheckCircle className="w-3 h-3 text-green-500" />
@@ -214,11 +234,11 @@ export default function PasswordSettingsPage() {
             <div className="relative">
               <input
                 type={showPasswords.confirm ? 'text' : 'password'}
-                value={formData.confirmPassword}
-                onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                {...register('confirmPassword')}
+                className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
+                }`}
                 placeholder="새 비밀번호를 다시 입력하세요"
-                required
               />
               <button
                 type="button"
@@ -228,11 +248,12 @@ export default function PasswordSettingsPage() {
                 {showPasswords.confirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+            {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>}
 
             {/* 비밀번호 일치 확인 */}
-            {formData.confirmPassword && (
+            {confirmPassword && newPassword && (
               <div className="mt-2">
-                {formData.newPassword === formData.confirmPassword ? (
+                {newPassword === confirmPassword ? (
                   <div className="flex items-center gap-2 text-xs text-green-700">
                     <CheckCircle className="w-3 h-3" />
                     <span>비밀번호가 일치합니다</span>
@@ -251,7 +272,7 @@ export default function PasswordSettingsPage() {
           <div className="pt-4">
             <button
               type="submit"
-              disabled={!isFormValid || changePasswordMutation.isPending}
+              disabled={!isValid || changePasswordMutation.isPending}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save className="w-4 h-4" />
