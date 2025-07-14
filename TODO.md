@@ -3,9 +3,9 @@
 ## 📋 진행 상황
 
 - **전체 작업**: 24개
-- **완료**: 17개
+- **완료**: 18개
 - **진행 중**: 0개
-- **대기 중**: 7개
+- **대기 중**: 6개
 
 ---
 
@@ -73,13 +73,16 @@
   - ✅ 자동 초기화 시스템 구현 (app/lib/seed-checker.ts, db-init.ts)
   - 의존성: Mock 데이터 설정
 
-- [ ] **사용자 인증 시스템 구현**
+- [x] **사용자 인증 시스템 구현** `(완료)`
 
-  - NextAuth.js 또는 자체 JWT 인증 시스템 구축
-  - 사용자 데이터베이스 스키마 설계 (Prisma)
-  - 로그인/로그아웃 API 엔드포인트 구현
-  - 회원가입 API 및 유효성 검증
-  - 인증 상태 관리 (Zustand + React Query)
+  - ✅ NextAuth.js v5 + Prisma Adapter 통합 (Credentials Provider)
+  - ✅ NextAuth 표준 데이터베이스 스키마 설계 (Account, Session, VerificationToken)
+  - ✅ 로그인/로그아웃/회원가입 API 엔드포인트 구현
+  - ✅ 이메일/비밀번호 유효성 검증 및 bcrypt 해싱
+  - ✅ 인증 상태 관리 (Zustand + SessionProvider)
+  - ✅ 보호된 경로 미들웨어 및 자동 리다이렉트
+  - ✅ TypeScript 완전 지원 (NextAuth 타입 확장)
+  - ✅ 자동 라이더 프로필 생성 (트랜잭션)
   - 의존성: 데이터베이스 마이그레이션
 
 ---
