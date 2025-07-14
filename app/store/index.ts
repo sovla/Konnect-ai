@@ -2,5 +2,6 @@
 export { useUIStore } from './uiStore';
 export { useDashboardStore } from './dashboardStore';
 export { useMapStore } from './mapStore';
+export { useAuthStore } from './authStore';
 
 // 스토어 타입들은 필요할 때 개별 파일에서 import하여 사용

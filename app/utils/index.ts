@@ -2,3 +2,4 @@
 export * from './formatHelpers';
 export * from './dateHelpers';
 export * from './chartUtils';
+export * from './auth';
