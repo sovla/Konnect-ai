@@ -7,6 +7,12 @@ export interface ApiResponse<T = unknown> {
   message?: string;
 }
 
+// 날짜 범위 타입 (dateHelpers와 공용)
+export interface DateRange {
+  startDate: string;
+  endDate: string;
+}
+
 // 라이더 관련 타입들
 export interface RiderProfile {
   id: string;

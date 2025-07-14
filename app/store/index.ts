@@ -1,7 +1,6 @@
 // Zustand 스토어들의 export를 관리하는 파일
-// 예시:
-// export { useUIStore } from './uiStore';
-// export { useUserStore } from './userStore';
-// export { useDashboardStore } from './dashboardStore';
+export { useUIStore } from './uiStore';
+export { useDashboardStore } from './dashboardStore';
+export { useMapStore } from './mapStore';
 
-export {};
+// 스토어 타입들은 필요할 때 개별 파일에서 import하여 사용
