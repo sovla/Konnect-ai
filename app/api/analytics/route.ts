@@ -1,7 +1,7 @@
-import { MonthlyAnalysis } from '@/app/types';
+import { MonthlyAnalysis, WeeklyStat } from '@/app/types';
 import { NextResponse } from 'next/server';
 
-const weeklyStats = [
+const weeklyStats: WeeklyStat[] = [
   { date: '2025-01-08', earnings: 145000, deliveries: 32 },
   { date: '2025-01-09', earnings: 132000, deliveries: 28 },
   { date: '2025-01-10', earnings: 156000, deliveries: 35 },

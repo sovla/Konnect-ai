@@ -22,3 +22,7 @@ export {
 export { default as PolygonInfoPopup } from './map/PolygonInfoPopup';
 export { default as HeatmapInfoPopup } from './map/HeatmapInfoPopup';
 export { default as HeatmapOverlay } from './map/HeatmapOverlay';
+
+// Chart Components
+export { LineChart, DonutChart, BarChart } from './charts';
+export type { LineChartProps, DonutChartProps, BarChartProps } from './charts';

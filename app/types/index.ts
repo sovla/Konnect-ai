@@ -211,3 +211,11 @@ export interface MapPolygonData {
   strokeOpacity: number;
   strokeWeight: number;
 }
+
+export type AnalyticsType = 'weekly' | 'monthly';
+
+export type AnalyticsResponse<T extends AnalyticsType | undefined> = T extends 'weekly'
+  ? ApiResponse<WeeklyStat[]>
+  : T extends 'monthly'
+  ? ApiResponse<MonthlyAnalysis>
+  : ApiResponse<{ weekly: WeeklyStat[]; monthly: MonthlyAnalysis }>;

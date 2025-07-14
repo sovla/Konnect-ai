@@ -3,6 +3,8 @@
 import {
   AIPredictionResponse,
   AIPredictionType,
+  AnalyticsResponse,
+  AnalyticsType,
   Announcement,
   ApiResponse,
   Delivery,
@@ -76,9 +78,9 @@ export const getAnnouncements = async (params?: { type?: string; active?: boolea
 };
 
 // 수익 분석 데이터 조회
-export const getAnalytics = async (type?: 'weekly' | 'monthly') => {
+export const getAnalytics = async <T extends AnalyticsType | undefined>(type?: T): Promise<AnalyticsResponse<T>> => {
   const searchParams = new URLSearchParams();
   if (type) searchParams.append('type', type);
 
-  return apiClient.get<ApiResponse<[]>>(`/analytics?${searchParams.toString()}`);
+  return apiClient.get(`/analytics?${searchParams.toString()}`) as Promise<AnalyticsResponse<T>>;
 };

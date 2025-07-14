@@ -3,7 +3,9 @@
 // 날짜 관련 유틸리티들
 export * from './dateHelpers';
 
+// 포맷팅 관련 유틸리티들
+export * from './formatHelpers';
+
 // 향후 추가될 유틸리티들을 위한 공간
-// export * from './formatHelpers';
 // export * from './validationHelpers';
 // export * from './mapHelpers';
