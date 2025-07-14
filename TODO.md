@@ -361,5 +361,7 @@
 - 2025-07-14: React Hook Form과 zod를 모든 설정 페이지에 적용 (실시간 유효성 검증, 렌더링 최적화, 타입 안전성 확보, 복잡한 폼 로직 간소화)
 - 2025-07-15: Mock 데이터를 실제 DB 연동으로 마이그레이션 완료 (AIZone, AIZonePrediction, HeatmapPoint, Delivery 테이블 시드 데이터 생성, 폴리곤 렌더링 문제 해결, dateHelpers와 날짜 일관성 확보)
 - 2025-07-15: 배달 API를 완전한 DB 기반으로 개선 완료 (통계 계산 추가, 페이지네이션 완전 지원, 검색 기능 API 레벨 구현, DeliveriesResponse DTO 확장, useDeliveries 훅 파라미터 확장)
+- 2025-07-15: API 404 에러 수정 완료 (라이더 프로필 없는 경우 빈 데이터 200 응답으로 변경, /api/deliveries, /api/today-stats, /api/analytics 수정)
+- 2025-07-15: 카카오 미니맵 구현 완료 (메인 대시보드 AI 추천 핫스팟 위젯에 실제 카카오맵 연동, miniMode 지원, 현재 시간대 상위 3개 핫스팟 표시, 인터랙션 최적화)
 
 ---

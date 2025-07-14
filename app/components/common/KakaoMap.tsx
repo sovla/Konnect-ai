@@ -13,14 +13,22 @@ interface KakaoMapProps {
   width?: string;
   height?: string;
   className?: string;
+  miniMode?: boolean; // 미니맵 모드 추가
+  showCurrentLocation?: boolean; // 현재 위치 마커 표시 여부
 }
 
-export default function KakaoMap({ width = '100%', height = '400px', className = '' }: KakaoMapProps) {
+export default function KakaoMap({
+  width = '100%',
+  height = '400px',
+  className = '',
+  miniMode = false,
+  showCurrentLocation = true,
+}: KakaoMapProps) {
   // Zustand 상태
-  const { center, zoom } = useMapStore();
+  const { center, zoom, setZoom } = useMapStore();
   const { mapFilters } = useUIStore();
 
-  // 지도 인터랙션 훅
+  // 지도 인터랙션 훅 (미니맵 모드에서는 사용하지 않음)
   const {
     clickedPolygonInfo,
     clickedHeatmapInfo,
@@ -42,10 +50,18 @@ export default function KakaoMap({ width = '100%', height = '400px', className =
 
   // 현재 선택된 시간대의 폴리곤 데이터 필터링 (메모이제이션)
   const currentPolygons = useMemo(() => {
+    if (miniMode) {
+      // 미니맵 모드에서는 현재 시간의 상위 3개 핫스팟만 표시
+      const currentHour = new Date().getHours();
+      const currentPrediction = predictionsData.find((prediction) => prediction.time === `${currentHour}:00`);
+      // 줌 레벨 조절
+      setZoom(9);
+      return currentPrediction?.polygons.slice(0, 3) || [];
+    }
     return (
       predictionsData.find((prediction) => prediction.time === `${mapFilters.selectedTimeSlot}:00`)?.polygons || []
     );
-  }, [predictionsData, mapFilters.selectedTimeSlot]);
+  }, [predictionsData, mapFilters.selectedTimeSlot, miniMode]);
 
   // 카카오맵 API 로더
   const [loading, error] = useKakaoLoader({
@@ -81,12 +97,14 @@ export default function KakaoMap({ width = '100%', height = '400px', className =
             <br />
             API 키를 확인해주세요.
           </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-2 px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
-          >
-            새로고침
-          </button>
+          {!miniMode && (
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-2 px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
+            >
+              새로고침
+            </button>
+          )}
         </div>
       </div>
     );
@@ -103,21 +121,26 @@ export default function KakaoMap({ width = '100%', height = '400px', className =
           width,
           height,
         }}
-        level={zoom}
-        onCenterChanged={handleCenterChange}
-        onZoomChanged={handleZoomChange}
+        level={miniMode ? zoom + 1 : zoom} // 미니맵은 조금 더 넓게 보기
+        onCenterChanged={miniMode ? undefined : handleCenterChange} // 미니맵에서는 센터 변경 비활성화
+        onZoomChanged={miniMode ? undefined : handleZoomChange} // 미니맵에서는 줌 변경 비활성화
         className="rounded-lg overflow-hidden shadow-sm border border-gray-200"
+        draggable={!miniMode} // 미니맵에서는 드래그 비활성화
+        zoomable={!miniMode} // 미니맵에서는 줌 비활성화
       >
-        {/* 현재 위치 마커 (예시) */}
-        <MapMarker
-          position={{
-            lat: center.lat,
-            lng: center.lng,
-          }}
-        />
+        {/* 현재 위치 마커 */}
+        {showCurrentLocation && (
+          <MapMarker
+            position={{
+              lat: center.lat,
+              lng: center.lng,
+            }}
+          />
+        )}
 
-        {/* 실시간 히트맵 표시 */}
-        {mapFilters.showRealTimeHeatmap &&
+        {/* 실시간 히트맵 표시 (미니맵에서는 표시하지 않음) */}
+        {!miniMode &&
+          mapFilters.showRealTimeHeatmap &&
           heatmapData.map((point, index) => (
             <CustomOverlayMap key={`heatmap-${index}`} position={{ lat: point.lat, lng: point.lng }}>
               <HeatmapOverlay
@@ -137,44 +160,56 @@ export default function KakaoMap({ width = '100%', height = '400px', className =
           ))}
 
         {/* AI 예측 폴리곤 표시 */}
-        {mapFilters.showAIPredictions &&
+        {(miniMode || mapFilters.showAIPredictions) &&
           currentPolygons.map((polygon, index) => (
             <Polygon
               key={`polygon-${index}`}
               path={polygon.coords.map(([lat, lng]) => ({ lat, lng }))}
-              strokeWeight={2}
+              strokeWeight={miniMode ? 1 : 2}
               strokeColor="#10b981"
               strokeOpacity={0.8}
               fillColor="#10b981"
-              fillOpacity={0.2}
-              onClick={(map, mouseEvent) => handlePolygonClick(polygon, mouseEvent)}
+              fillOpacity={miniMode ? 0.3 : 0.2}
+              onClick={miniMode ? undefined : (map, mouseEvent) => handlePolygonClick(polygon, mouseEvent)}
             />
           ))}
 
-        {/* 폴리곤 클릭 정보 팝업 */}
-        {clickedPolygonInfo && (
-          <PolygonInfoPopup
-            name={clickedPolygonInfo.name}
-            expectedCalls={clickedPolygonInfo.expectedCalls}
-            avgFee={clickedPolygonInfo.avgFee}
-            confidence={clickedPolygonInfo.confidence}
-            reasons={clickedPolygonInfo.reasons}
-            position={clickedPolygonInfo.position}
-            onClose={closePolygonInfo}
-          />
-        )}
+        {/* 미니맵에서는 팝업 표시하지 않음 */}
+        {!miniMode && (
+          <>
+            {/* 폴리곤 클릭 정보 팝업 */}
+            {clickedPolygonInfo && (
+              <PolygonInfoPopup
+                name={clickedPolygonInfo.name}
+                expectedCalls={clickedPolygonInfo.expectedCalls}
+                avgFee={clickedPolygonInfo.avgFee}
+                confidence={clickedPolygonInfo.confidence}
+                reasons={clickedPolygonInfo.reasons}
+                position={clickedPolygonInfo.position}
+                onClose={closePolygonInfo}
+              />
+            )}
 
-        {/* 히트맵 마커 클릭 정보 팝업 */}
-        {clickedHeatmapInfo && (
-          <HeatmapInfoPopup
-            recentOrders={clickedHeatmapInfo.recentOrders}
-            avgWaitTime={clickedHeatmapInfo.avgWaitTime}
-            hourlyTrend={clickedHeatmapInfo.hourlyTrend}
-            position={clickedHeatmapInfo.position}
-            onClose={closeHeatmapInfo}
-          />
+            {/* 히트맵 마커 클릭 정보 팝업 */}
+            {clickedHeatmapInfo && (
+              <HeatmapInfoPopup
+                recentOrders={clickedHeatmapInfo.recentOrders}
+                avgWaitTime={clickedHeatmapInfo.avgWaitTime}
+                hourlyTrend={clickedHeatmapInfo.hourlyTrend}
+                position={clickedHeatmapInfo.position}
+                onClose={closeHeatmapInfo}
+              />
+            )}
+          </>
         )}
       </Map>
+
+      {/* 미니맵 오버레이 정보 */}
+      {miniMode && currentPolygons.length > 0 && (
+        <div className="absolute top-2 left-2 bg-white bg-opacity-90 rounded px-2 py-1 text-xs font-medium text-gray-700 shadow-sm">
+          🔥 {currentPolygons.length}개 핫스팟
+        </div>
+      )}
     </div>
   );
 }

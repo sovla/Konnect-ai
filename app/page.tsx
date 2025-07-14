@@ -8,6 +8,7 @@ import {
   PredictionSkeleton,
   AnnouncementSkeleton,
   DashboardLayout,
+  KakaoMap,
 } from './components';
 import { TrendingUp, MapPin, Clock, Bell } from 'lucide-react';
 import { formatCurrency } from './utils/dateHelpers';
@@ -86,14 +87,19 @@ export default function Dashboard() {
             >
               {(data) => (
                 <div className="space-y-4">
-                  <div className="bg-gray-100 h-32 rounded-lg flex items-center justify-center">
-                    <div className="text-center">
-                      <MapPin className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-500">카카오맵 미니맵</p>
-                      <p className="text-xs text-gray-400">추후 구현 예정</p>
-                    </div>
+                  {/* 카카오 미니맵 */}
+                  <div className="h-32">
+                    <KakaoMap
+                      width="100%"
+                      height="128px"
+                      miniMode={true}
+                      showCurrentLocation={true}
+                      className="rounded-lg"
+                    />
                   </div>
+                  {/* 핫스팟 리스트 */}
                   <div className="space-y-2">
+                    <p className="text-xs text-gray-500 mb-2">🔥 현재 시간대 AI 추천 핫스팟</p>
                     {data.data[0]?.polygons.slice(0, 2).map((polygon, index) => (
                       <div
                         key={index}
