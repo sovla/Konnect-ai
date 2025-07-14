@@ -1,6 +1,5 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Save, User, Mail, Phone, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -8,25 +7,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 
 import { profileSchema, type ProfileFormData } from '@/app/lib/schemas';
-
-interface UserProfile {
-  id: string;
-  name: string;
-  email: string;
-  phone: string | null;
-  createdAt: string;
-}
-
-interface RiderStats {
-  totalDeliveries: number;
-  totalEarnings: number;
-  averageRating: number;
-  acceptanceRate: number;
-}
+import { useUserProfile, useRiderStats, useUpdateProfile } from '@/app/hooks';
 
 export default function ProfileSettingsPage() {
-  const queryClient = useQueryClient();
-
   // React Hook Form 설정
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -46,45 +29,13 @@ export default function ProfileSettingsPage() {
   } = form;
 
   // 사용자 프로필 조회
-  const { data: profile, isLoading: profileLoading } = useQuery({
-    queryKey: ['user-profile'],
-    queryFn: async () => {
-      const response = await fetch('/api/settings/profile');
-      if (!response.ok) {
-        throw new Error('프로필을 불러오는데 실패했습니다.');
-      }
-      return response.json() as Promise<UserProfile>;
-    },
-  });
+  const { data: profile, isLoading: profileLoading } = useUserProfile();
 
   // 라이더 통계 조회
-  const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ['rider-stats'],
-    queryFn: async () => {
-      const response = await fetch('/api/settings/profile');
-      if (!response.ok) {
-        throw new Error('통계를 불러오는데 실패했습니다.');
-      }
-      const data = await response.json();
-      return data.stats as RiderStats;
-    },
-  });
+  const { data: stats, isLoading: statsLoading } = useRiderStats();
 
   // 프로필 업데이트 뮤테이션
-  const updateProfileMutation = useMutation({
-    mutationFn: async (data: ProfileFormData) => {
-      const response = await fetch('/api/settings/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || '프로필 업데이트에 실패했습니다.');
-      }
-      return response.json();
-    },
-  });
+  const updateProfileMutation = useUpdateProfile();
 
   // 프로필 데이터 로드 시 폼 초기화
   useEffect(() => {
@@ -101,7 +52,6 @@ export default function ProfileSettingsPage() {
   const onSubmit = async (data: ProfileFormData) => {
     try {
       await updateProfileMutation.mutateAsync(data);
-      await queryClient.invalidateQueries({ queryKey: ['user-profile'] });
       reset(data); // 성공 시 dirty 상태 초기화
     } catch (error) {
       console.error('프로필 업데이트 실패:', error);

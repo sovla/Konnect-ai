@@ -7,8 +7,7 @@ import { z } from 'zod';
 const UpdateProfileSchema = z.object({
   name: z.string().min(1, '이름을 입력해주세요.').max(50, '이름은 최대 50자까지 가능합니다.').optional(),
   email: z
-    .string()
-    .email('올바른 이메일 형식을 입력해주세요.')
+    .email({ message: '올바른 이메일 형식을 입력해주세요.' })
     .max(255, '이메일은 최대 255자까지 가능합니다.')
     .optional(),
   phone: z

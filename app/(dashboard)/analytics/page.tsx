@@ -1,11 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import DashboardCard from '@/app/components/common/DashboardCard';
 // DashboardLayout은 상위 layout.tsx에서 자동으로 적용됨
 import { LineChart, DonutChart, BarChart } from '@/app/components/charts';
-import { getAnalytics } from '@/app/apis';
+import { useAnalytics } from '@/app/hooks';
 import { formatCurrency, deliveryCountFormatter } from '@/app/utils';
 import { WeeklyStat, MonthlyAnalysis, DayOfWeekStat } from '@/app/types';
 
@@ -14,14 +13,7 @@ type AnalyticsType = 'weekly' | 'monthly';
 export default function AnalyticsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<AnalyticsType>('weekly');
 
-  const {
-    data: analyticsData,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ['analytics', selectedPeriod],
-    queryFn: () => getAnalytics(selectedPeriod),
-  });
+  const { data: analyticsData, isLoading, error } = useAnalytics(selectedPeriod);
 
   return (
     <div className="p-6">

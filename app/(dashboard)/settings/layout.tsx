@@ -55,7 +55,7 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
         {/* 헤더 */}
-        <div className="pb-5 border-b border-gray-200 mb-8">
+        <div className="pb-5 border-b border-gray-200 mb-8 mt-10">
           <h1 className="text-3xl font-bold leading-tight text-gray-900">설정</h1>
           <p className="mt-2 text-sm text-gray-600">계정, 프로필, 운행 설정을 관리하세요.</p>
         </div>

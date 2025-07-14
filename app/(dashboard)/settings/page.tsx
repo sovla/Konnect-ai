@@ -1,44 +1,16 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { User, Truck, Monitor, Key, Trash2, ChevronRight, CheckCircle, XCircle, Clock } from 'lucide-react';
-
-// API 함수들
-const fetchUserProfile = async () => {
-  const res = await fetch('/api/settings/profile');
-  if (!res.ok) throw new Error('프로필 조회 실패');
-  return res.json();
-};
-
-const fetchRiderSettings = async () => {
-  const res = await fetch('/api/settings/rider');
-  if (!res.ok) throw new Error('라이더 설정 조회 실패');
-  return res.json();
-};
-
-const fetchAppSettings = async () => {
-  const res = await fetch('/api/settings');
-  if (!res.ok) throw new Error('앱 설정 조회 실패');
-  return res.json();
-};
+import { useSettingsOverview } from '@/app/hooks';
 
 export default function SettingsOverviewPage() {
-  const profileQuery = useQuery({
-    queryKey: ['settings', 'profile'],
-    queryFn: fetchUserProfile,
-  });
-
-  const riderQuery = useQuery({
-    queryKey: ['settings', 'rider'],
-    queryFn: fetchRiderSettings,
-  });
-
-  const appQuery = useQuery({
-    queryKey: ['settings', 'app'],
-    queryFn: fetchAppSettings,
-  });
-
+  const { data, isLoading } = useSettingsOverview();
+  console.log(data);
+  if (isLoading) {
+    return null;
+  }
+  return null;
   return (
     <div className="space-y-6">
       {/* 페이지 헤더 */}

@@ -56,7 +56,6 @@ export default function LoginPage() {
       } else {
         // 로그인 성공
         router.push('/');
-        router.refresh();
       }
     } catch (error) {
       console.error('로그인 에러:', error);

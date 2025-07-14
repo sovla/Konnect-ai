@@ -31,6 +31,40 @@ const UpdateRiderSettingsSchema = z.object({
   emailMarketing: z.boolean().optional(),
 });
 
+// API 응답 타입 정의
+export interface RiderProfileResponse {
+  id: string;
+  dailyGoal: number;
+  monthlyGoal: number;
+  preferredAreas: string[];
+  vehicleType: VehicleType;
+  minOrderAmount: number;
+  workingHours: { start: number; end: number };
+  maxDistance: number;
+  autoAccept: boolean;
+  pushNewOrder: boolean;
+  pushGoalAchieve: boolean;
+  pushPromotion: boolean;
+  emailSummary: boolean;
+  emailMarketing: boolean;
+}
+
+export interface RiderStatsResponse {
+  totalDeliveries: number;
+  totalEarnings: number;
+  averageRating: number;
+  acceptanceRate: number;
+  avgDeliveryTime: number;
+  onlineTime: number;
+  isOnline: boolean;
+}
+
+export interface GetRiderSettingsResponse {
+  riderProfile: RiderProfileResponse;
+  riderStats: RiderStatsResponse;
+  message: string;
+}
+
 // GET /api/settings/rider - 라이더 설정 조회
 export async function GET() {
   try {
@@ -58,7 +92,7 @@ export async function GET() {
         pushPromotion: true,
         emailSummary: true,
         emailMarketing: true,
-        // 통계 정보도 포함
+        // 통계 정보
         totalDeliveries: true,
         averageRating: true,
         acceptanceRate: true,
@@ -72,10 +106,47 @@ export async function GET() {
       return Response.json({ error: '라이더 프로필을 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    return Response.json({
-      riderProfile,
-      message: '라이더 설정을 조회했습니다.',
+    // 총 수익 계산 (모든 배달의 totalEarnings 합계)
+    const earningsAggregation = await prisma.delivery.aggregate({
+      where: { riderId: riderProfile.id },
+      _sum: {
+        totalEarnings: true,
+      },
     });
+
+    const totalEarnings = earningsAggregation._sum.totalEarnings || 0;
+
+    // 응답 데이터 구성
+    const responseData: GetRiderSettingsResponse = {
+      riderProfile: {
+        id: riderProfile.id,
+        dailyGoal: riderProfile.dailyGoal,
+        monthlyGoal: riderProfile.monthlyGoal,
+        preferredAreas: riderProfile.preferredAreas,
+        vehicleType: riderProfile.vehicleType,
+        minOrderAmount: riderProfile.minOrderAmount,
+        workingHours: riderProfile.workingHours as { start: number; end: number },
+        maxDistance: riderProfile.maxDistance,
+        autoAccept: riderProfile.autoAccept,
+        pushNewOrder: riderProfile.pushNewOrder,
+        pushGoalAchieve: riderProfile.pushGoalAchieve,
+        pushPromotion: riderProfile.pushPromotion,
+        emailSummary: riderProfile.emailSummary,
+        emailMarketing: riderProfile.emailMarketing,
+      },
+      riderStats: {
+        totalDeliveries: riderProfile.totalDeliveries,
+        totalEarnings,
+        averageRating: riderProfile.averageRating,
+        acceptanceRate: riderProfile.acceptanceRate,
+        avgDeliveryTime: riderProfile.avgDeliveryTime,
+        onlineTime: riderProfile.onlineTime,
+        isOnline: riderProfile.isOnline,
+      },
+      message: '라이더 설정을 조회했습니다.',
+    };
+
+    return Response.json(responseData);
   } catch (error) {
     console.error('라이더 설정 조회 실패:', error);
     return Response.json({ error: '라이더 설정 조회에 실패했습니다.' }, { status: 500 });

@@ -6,8 +6,8 @@ import { z } from 'zod';
 
 // zod 스키마 정의
 const UpdateUserSettingsSchema = z.object({
-  theme: z.nativeEnum(Theme).optional(),
-  language: z.nativeEnum(Language).optional(),
+  theme: z.enum(Theme).optional(),
+  language: z.enum(Language).optional(),
   mapDefaultZoom: z.number().min(1).max(20).optional(),
   mapDefaultLat: z.number().min(-90).max(90).optional(),
   mapDefaultLng: z.number().min(-180).max(180).optional(),

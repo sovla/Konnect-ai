@@ -1,10 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import DashboardCard from '@/app/components/common/DashboardCard';
 import DeliveryTable from '@/app/components/common/DeliveryTable';
-import { getDeliveries } from '@/app/apis';
+import { useDeliveries } from '@/app/hooks';
 import { formatCurrency } from '@/app/utils';
 import { CalendarDays, Package, Clock, TrendingUp } from 'lucide-react';
 
@@ -12,10 +11,7 @@ export default function HistoryPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<'all' | 'week' | 'month'>('all');
 
   // 배달 내역 데이터 조회
-  const { data: deliveriesData, isLoading: isDeliveriesLoading } = useQuery({
-    queryKey: ['deliveries', selectedPeriod],
-    queryFn: () => getDeliveries(),
-  });
+  const { data: deliveriesData, isLoading: isDeliveriesLoading } = useDeliveries({});
 
   const deliveries = deliveriesData?.success ? deliveriesData.data : [];
 
