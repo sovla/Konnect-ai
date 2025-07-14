@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: '딜버 파트너 대시보드',
-  description: '라이더를 위한 AI 기반 수익 & 효율 관리 대시보드',
+  title: 'Konnect AI',
+  description: 'Korea Connect - AI를 활용한 한국의 거리 효율적 연동 플랫폼',
 };
 
 export default function RootLayout({

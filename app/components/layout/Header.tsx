@@ -22,11 +22,11 @@ export default function Header({ onMenuClick, isMobile = false }: HeaderProps) {
         )}
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">딜</span>
+            <span className="text-white font-bold text-sm">K</span>
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-gray-900">딜버 파트너 대시보드</h1>
-            <p className="text-xs text-gray-500">오늘도 안전운행 하세요!</p>
+            <h1 className="text-lg font-semibold text-gray-900">Konnect AI</h1>
+            <p className="text-xs text-gray-500">Korea Connect - 스마트한 배달 연동</p>
           </div>
         </div>
       </div>
