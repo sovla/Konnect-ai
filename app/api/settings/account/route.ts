@@ -2,13 +2,13 @@ import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/app/lib/prisma';
 import bcrypt from 'bcryptjs';
-import { z } from 'zod';
-
-// zod 스키마 정의
-const DeleteAccountSchema = z.object({
-  password: z.string().min(1, '비밀번호를 입력해주세요.'),
-  confirmation: z.literal('계정을 삭제하겠습니다'),
-});
+import {
+  DeleteAccountRequestSchema,
+  DeleteAccountResponseSchema,
+  AccountDeletionInfoResponseSchema,
+  type DeleteAccountResponse,
+  type AccountDeletionInfoResponse,
+} from '@/app/types/dto';
 
 // DELETE /api/settings/account - 계정 삭제
 export async function DELETE(request: NextRequest) {
@@ -16,16 +16,23 @@ export async function DELETE(request: NextRequest) {
     const session = await auth();
 
     if (!session?.user?.id) {
-      return Response.json({ error: '인증이 필요합니다.' }, { status: 401 });
+      return Response.json(
+        {
+          success: false,
+          error: '인증이 필요합니다.',
+        },
+        { status: 401 },
+      );
     }
 
     const body = await request.json();
 
     // zod validation
-    const validationResult = DeleteAccountSchema.safeParse(body);
+    const validationResult = DeleteAccountRequestSchema.safeParse(body);
     if (!validationResult.success) {
       return Response.json(
         {
+          success: false,
           error: '잘못된 요청 데이터입니다.',
           details: validationResult.error.issues,
         },
@@ -52,13 +59,25 @@ export async function DELETE(request: NextRequest) {
     });
 
     if (!user || !user.password) {
-      return Response.json({ error: '사용자를 찾을 수 없거나 비밀번호가 설정되지 않았습니다.' }, { status: 404 });
+      return Response.json(
+        {
+          success: false,
+          error: '사용자를 찾을 수 없거나 비밀번호가 설정되지 않았습니다.',
+        },
+        { status: 404 },
+      );
     }
 
     // 비밀번호 확인
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return Response.json({ error: '비밀번호가 올바르지 않습니다.' }, { status: 400 });
+      return Response.json(
+        {
+          success: false,
+          error: '비밀번호가 올바르지 않습니다.',
+        },
+        { status: 400 },
+      );
     }
 
     // 계정 삭제 처리 (트랜잭션으로 안전하게 처리)
@@ -96,14 +115,26 @@ export async function DELETE(request: NextRequest) {
       });
     });
 
-    // 성공 응답
-    return Response.json({
+    const responseData: DeleteAccountResponse = {
+      success: true,
       message: '계정이 성공적으로 삭제되었습니다.',
-      deletedAt: new Date().toISOString(),
-    });
+      data: {
+        deletedAt: new Date().toISOString(),
+      },
+    };
+
+    // 응답 검증
+    const validatedResponse = DeleteAccountResponseSchema.parse(responseData);
+    return Response.json(validatedResponse);
   } catch (error) {
     console.error('계정 삭제 실패:', error);
-    return Response.json({ error: '계정 삭제에 실패했습니다.' }, { status: 500 });
+    return Response.json(
+      {
+        success: false,
+        error: '계정 삭제에 실패했습니다.',
+      },
+      { status: 500 },
+    );
   }
 }
 
@@ -113,7 +144,13 @@ export async function GET() {
     const session = await auth();
 
     if (!session?.user?.id) {
-      return Response.json({ error: '인증이 필요합니다.' }, { status: 401 });
+      return Response.json(
+        {
+          success: false,
+          error: '인증이 필요합니다.',
+        },
+        { status: 401 },
+      );
     }
 
     // 사용자 계정과 관련 데이터 통계 조회
@@ -154,38 +191,54 @@ export async function GET() {
     });
 
     if (!user) {
-      return Response.json({ error: '사용자를 찾을 수 없습니다.' }, { status: 404 });
+      return Response.json(
+        {
+          success: false,
+          error: '사용자를 찾을 수 없습니다.',
+        },
+        { status: 404 },
+      );
     }
 
-    // 삭제될 데이터 통계 정보
-    const deletionInfo = {
-      accountCreatedAt: user.createdAt,
-      totalDeliveries: user.riderProfile?.totalDeliveries || 0,
-      deliveryRecords: user.riderProfile?.deliveries.length || 0,
-      activeSessions: user.sessions.length,
-      connectedAccounts: user.accounts.length,
-      hasUserSettings: !!user.riderProfile?.userSettings,
-      dataToDelete: [
-        '사용자 계정 정보',
-        '라이더 프로필',
-        '배달 내역 데이터',
-        '사용자 설정',
-        '세션 데이터',
-        '연결된 계정 정보',
-      ],
-      warning: [
-        '계정 삭제 후에는 복구가 불가능합니다.',
-        '모든 배달 내역과 통계 데이터가 영구적으로 삭제됩니다.',
-        '삭제된 계정으로는 다시 로그인할 수 없습니다.',
-      ],
+    const responseData: AccountDeletionInfoResponse = {
+      success: true,
+      message: '계정 삭제 정보를 조회했습니다.',
+      data: {
+        deletionInfo: {
+          accountCreatedAt: user.createdAt,
+          totalDeliveries: user.riderProfile?.totalDeliveries || 0,
+          deliveryRecords: user.riderProfile?.deliveries.length || 0,
+          activeSessions: user.sessions.length,
+          connectedAccounts: user.accounts.length,
+          hasUserSettings: !!user.riderProfile?.userSettings,
+          dataToDelete: [
+            '사용자 계정 정보',
+            '라이더 프로필',
+            '배달 내역 데이터',
+            '사용자 설정',
+            '세션 데이터',
+            '연결된 계정 정보',
+          ],
+          warning: [
+            '계정 삭제 후에는 복구가 불가능합니다.',
+            '모든 배달 내역과 통계 데이터가 영구적으로 삭제됩니다.',
+            '삭제된 계정으로는 다시 로그인할 수 없습니다.',
+          ],
+        },
+      },
     };
 
-    return Response.json({
-      deletionInfo,
-      message: '계정 삭제 정보를 조회했습니다.',
-    });
+    // 응답 검증
+    const validatedResponse = AccountDeletionInfoResponseSchema.parse(responseData);
+    return Response.json(validatedResponse);
   } catch (error) {
     console.error('계정 삭제 정보 조회 실패:', error);
-    return Response.json({ error: '계정 삭제 정보 조회에 실패했습니다.' }, { status: 500 });
+    return Response.json(
+      {
+        success: false,
+        error: '계정 삭제 정보 조회에 실패했습니다.',
+      },
+      { status: 500 },
+    );
   }
 }

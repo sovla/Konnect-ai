@@ -155,13 +155,42 @@ export type UserSettings = z.infer<typeof UserSettingsSchema>;
 export type UpdateUserSettingsRequest = z.infer<typeof UpdateUserSettingsRequestSchema>;
 export type UserSettingsResponse = z.infer<typeof UserSettingsResponseSchema>;
 
+// 비밀번호 변경
+export const ChangePasswordRequestSchema = z
+  .object({
+    currentPassword: z.string().min(1, '현재 비밀번호를 입력해주세요.'),
+    newPassword: z
+      .string()
+      .min(8, '새 비밀번호는 최소 8자 이상이어야 합니다.')
+      .max(50, '새 비밀번호는 최대 50자까지 가능합니다.')
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+        '새 비밀번호는 대소문자, 숫자, 특수문자를 포함해야 합니다.',
+      ),
+    confirmPassword: z.string().min(1, '비밀번호 확인을 입력해주세요.'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: '새 비밀번호와 확인 비밀번호가 일치하지 않습니다.',
+    path: ['confirmPassword'],
+  });
+
+export const ChangePasswordResponseSchema = BaseResponseSchema;
+
 // 계정 삭제
 export const DeleteAccountRequestSchema = z.object({
   password: z.string().min(1, '비밀번호를 입력해주세요.'),
-  confirmText: z.string().min(1, '확인 텍스트를 입력해주세요.'),
+  confirmation: z.literal('계정을 삭제하겠습니다'),
 });
 
-export const AccountStatsSchema = z.object({
+export const DeleteAccountResponseSchema = BaseResponseSchema.extend({
+  data: z
+    .object({
+      deletedAt: z.string(),
+    })
+    .optional(),
+});
+
+export const AccountDeletionInfoSchema = z.object({
   accountCreatedAt: z.date(),
   totalDeliveries: z.number(),
   deliveryRecords: z.number(),
@@ -172,14 +201,17 @@ export const AccountStatsSchema = z.object({
   warning: z.array(z.string()),
 });
 
-export const AccountResponseSchema = BaseResponseSchema.extend({
+export const AccountDeletionInfoResponseSchema = BaseResponseSchema.extend({
   data: z
     .object({
-      stats: AccountStatsSchema,
+      deletionInfo: AccountDeletionInfoSchema,
     })
     .optional(),
 });
 
+export type ChangePasswordRequest = z.infer<typeof ChangePasswordRequestSchema>;
+export type ChangePasswordResponse = z.infer<typeof ChangePasswordResponseSchema>;
 export type DeleteAccountRequest = z.infer<typeof DeleteAccountRequestSchema>;
-export type AccountStats = z.infer<typeof AccountStatsSchema>;
-export type AccountResponse = z.infer<typeof AccountResponseSchema>;
+export type DeleteAccountResponse = z.infer<typeof DeleteAccountResponseSchema>;
+export type AccountDeletionInfo = z.infer<typeof AccountDeletionInfoSchema>;
+export type AccountDeletionInfoResponse = z.infer<typeof AccountDeletionInfoResponseSchema>;
