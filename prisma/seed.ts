@@ -289,7 +289,7 @@ async function main() {
         hour: hourData.hour,
         expectedCalls: hourData.expectedCalls,
         confidence: hourData.confidence,
-        predictionDate: new Date('2025-01-14'),
+        predictionDate: new Date('2025-07-14'),
       };
 
       await prisma.aIZonePrediction.upsert({
@@ -297,7 +297,7 @@ async function main() {
           zoneId_hour_predictionDate: {
             zoneId: zone.id,
             hour: hourData.hour,
-            predictionDate: new Date('2025-01-14'),
+            predictionDate: new Date('2025-07-14'),
           },
         },
         update: {},
@@ -344,7 +344,35 @@ async function main() {
 
   console.log('✅ AI 예측 구역 데이터 생성 완료');
 
-  // 4. 히트맵 데이터 생성
+  // 4. AI 예측 시간대별 데이터 생성 (폴리곤 표시를 위해 필요)
+  const aiZoneRecords = await prisma.aIZone.findMany();
+  for (const zone of aiZoneRecords) {
+    // 각 구역별로 14시, 15시, 18시 예측 데이터 생성
+    const timeSlots = [14, 15, 18];
+    for (const hour of timeSlots) {
+      await prisma.aIZonePrediction.upsert({
+        where: {
+          zoneId_hour_predictionDate: {
+            zoneId: zone.id,
+            hour: hour,
+            predictionDate: new Date('2025-01-14'),
+          },
+        },
+        update: {},
+        create: {
+          zoneId: zone.id,
+          predictionDate: new Date('2025-07-14'), // 고정 날짜 (개발용)
+          hour: hour,
+          expectedCalls: zone.expectedCalls + Math.floor(Math.random() * 5) - 2, // 약간의 변동
+          confidence: zone.confidence + (Math.random() * 0.1 - 0.05), // 약간의 변동
+        },
+      });
+    }
+  }
+
+  console.log('✅ AI 예측 시간대별 데이터 생성 완료');
+
+  // 5. 히트맵 데이터 생성
   const heatmapData: Prisma.HeatmapPointCreateInput[] = [
     { id: 'heatmap-1', lat: 35.169, lng: 129.129, weight: 0.8, recentOrders: 24, avgWaitTime: 8, hourlyTrend: '증가' },
     {

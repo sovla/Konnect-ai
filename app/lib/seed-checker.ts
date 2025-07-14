@@ -174,7 +174,27 @@ async function createSeedData() {
 
     console.log('✅ AI 예측 구역 생성 완료');
 
-    // 4. 히트맵 데이터 생성
+    // 4. AI 예측 시간대별 데이터 생성 (폴리곤 표시를 위해 필요)
+    const aiZoneRecords = await prisma.aIZone.findMany();
+    for (const zone of aiZoneRecords) {
+      // 각 구역별로 14시, 15시, 18시 예측 데이터 생성
+      const timeSlots = [14, 15, 18];
+      for (const hour of timeSlots) {
+        await prisma.aIZonePrediction.create({
+          data: {
+            zoneId: zone.id,
+            predictionDate: new Date('2025-01-14'), // 고정 날짜 (개발용)
+            hour: hour,
+            expectedCalls: zone.expectedCalls + Math.floor(Math.random() * 5) - 2, // 약간의 변동
+            confidence: zone.confidence + (Math.random() * 0.1 - 0.05), // 약간의 변동
+          },
+        });
+      }
+    }
+
+    console.log('✅ AI 예측 시간대별 데이터 생성 완료');
+
+    // 5. 히트맵 데이터 생성
     const heatmapPoints = [
       {
         id: 'heatmap-sample-1',
@@ -214,7 +234,7 @@ async function createSeedData() {
 
     console.log('✅ 히트맵 데이터 생성 완료');
 
-    // 5. 공지사항 생성
+    // 6. 공지사항 생성
     const announcements = [
       {
         id: 'announce-sample-001',
@@ -244,7 +264,7 @@ async function createSeedData() {
 
     console.log('✅ 공지사항 생성 완료');
 
-    // 6. 플랫폼 통계 생성
+    // 7. 플랫폼 통계 생성
     await prisma.platformStats.create({
       data: {
         date: new Date('2025-01-14'),
