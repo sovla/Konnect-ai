@@ -1,7 +1,12 @@
-import { AIPrediction, HourlyPrediction } from '@/app/types';
 import { NextResponse } from 'next/server';
+import {
+  AIPredictionsResponseSchema,
+  HeatmapResponseSchema,
+  HourlyPredictionsResponseSchema,
+  GetAIPredictionsRequestSchema,
+} from '@/app/types/dto';
 
-const aiPredictions: AIPrediction[] = [
+const aiPredictions = [
   {
     time: '14:00',
     polygons: [
@@ -77,6 +82,7 @@ const aiPredictions: AIPrediction[] = [
         expectedCalls: 6,
         avgFee: 3800,
         confidence: 78,
+        reasons: [],
       },
     ],
   },
@@ -94,6 +100,7 @@ const aiPredictions: AIPrediction[] = [
         expectedCalls: 15,
         avgFee: 4800,
         confidence: 95,
+        reasons: [],
       },
       {
         name: '광안리 상권',
@@ -106,6 +113,7 @@ const aiPredictions: AIPrediction[] = [
         expectedCalls: 10,
         avgFee: 5200,
         confidence: 88,
+        reasons: [],
       },
     ],
   },
@@ -116,108 +124,173 @@ const heatmapData = [
     lat: 35.169,
     lng: 129.129,
     weight: 0.8,
-    id: 'heatmap-1',
     recentOrders: 24,
     avgWaitTime: 8,
-    hourlyTrend: '증가',
+    hourlyTrend: 'rising',
   },
   {
     lat: 35.158,
     lng: 129.059,
     weight: 0.9,
-    id: 'heatmap-2',
     recentOrders: 32,
     avgWaitTime: 5,
-    hourlyTrend: '매우 증가',
+    hourlyTrend: 'rising',
   },
   {
     lat: 35.185,
     lng: 129.075,
     weight: 0.7,
-    id: 'heatmap-3',
     recentOrders: 18,
     avgWaitTime: 12,
-    hourlyTrend: '감소',
+    hourlyTrend: 'falling',
   },
   {
     lat: 35.152,
     lng: 129.118,
     weight: 0.6,
-    id: 'heatmap-4',
     recentOrders: 15,
     avgWaitTime: 6,
-    hourlyTrend: '안정',
+    hourlyTrend: 'stable',
   },
   {
     lat: 35.175,
     lng: 128.995,
     weight: 0.5,
-    id: 'heatmap-5',
     recentOrders: 12,
     avgWaitTime: 15,
-    hourlyTrend: '감소',
+    hourlyTrend: 'falling',
   },
   {
     lat: 35.135,
     lng: 129.095,
     weight: 0.4,
-    id: 'heatmap-6',
     recentOrders: 9,
     avgWaitTime: 10,
-    hourlyTrend: '안정',
+    hourlyTrend: 'stable',
   },
   {
     lat: 35.16,
     lng: 129.16,
     weight: 0.8,
-    id: 'heatmap-7',
     recentOrders: 22,
     avgWaitTime: 7,
-    hourlyTrend: '증가',
+    hourlyTrend: 'rising',
   },
   {
     lat: 35.17,
     lng: 129.17,
     weight: 0.7,
-    id: 'heatmap-8',
     recentOrders: 19,
     avgWaitTime: 9,
-    hourlyTrend: '안정',
+    hourlyTrend: 'stable',
   },
 ];
 
-const hourlyPredictions: HourlyPrediction[] = [
-  { hour: 13, expectedCalls: 5, confidence: 80 },
-  { hour: 14, expectedCalls: 8, confidence: 85 },
-  { hour: 15, expectedCalls: 6, confidence: 78 },
-  { hour: 16, expectedCalls: 4, confidence: 70 },
-  { hour: 17, expectedCalls: 7, confidence: 82 },
-  { hour: 18, expectedCalls: 12, confidence: 95 },
-  { hour: 19, expectedCalls: 15, confidence: 98 },
-  { hour: 20, expectedCalls: 10, confidence: 88 },
-  { hour: 21, expectedCalls: 6, confidence: 75 },
+const hourlyPredictions = [
+  {
+    hour: 13,
+    expectedOrders: 5,
+    avgEarnings: 25000,
+    busyAreas: ['센텀시티'],
+    confidence: 80,
+    recommendation: '센텀시티로 이동하세요',
+  },
+  {
+    hour: 14,
+    expectedOrders: 8,
+    avgEarnings: 40000,
+    busyAreas: ['서면', '센텀시티'],
+    confidence: 85,
+    recommendation: '서면 지역이 좋습니다',
+  },
+  {
+    hour: 15,
+    expectedOrders: 6,
+    avgEarnings: 30000,
+    busyAreas: ['해운대'],
+    confidence: 78,
+    recommendation: '해운대로 이동 추천',
+  },
+  { hour: 16, expectedOrders: 4, avgEarnings: 20000, busyAreas: [], confidence: 70, recommendation: '잠시 휴식하세요' },
+  {
+    hour: 17,
+    expectedOrders: 7,
+    avgEarnings: 35000,
+    busyAreas: ['연산동'],
+    confidence: 82,
+    recommendation: '연산동 지역으로',
+  },
+  {
+    hour: 18,
+    expectedOrders: 12,
+    avgEarnings: 60000,
+    busyAreas: ['연산동', '광안리'],
+    confidence: 95,
+    recommendation: '저녁 시간 최적 지역',
+  },
+  {
+    hour: 19,
+    expectedOrders: 15,
+    avgEarnings: 75000,
+    busyAreas: ['서면', '연산동'],
+    confidence: 98,
+    recommendation: '가장 바쁜 시간대',
+  },
+  {
+    hour: 20,
+    expectedOrders: 10,
+    avgEarnings: 50000,
+    busyAreas: ['광안리'],
+    confidence: 88,
+    recommendation: '광안리 추천',
+  },
+  {
+    hour: 21,
+    expectedOrders: 6,
+    avgEarnings: 30000,
+    busyAreas: [],
+    confidence: 75,
+    recommendation: '주문량 감소 예상',
+  },
 ];
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const type = searchParams.get('type'); // 'predictions', 'heatmap', 'hourly'
 
-  switch (type) {
-    case 'heatmap':
-      return NextResponse.json({
+  // 요청 파라미터 검증 (null 값 허용)
+  const queryParams = {
+    type: searchParams.get('type'),
+    time: searchParams.get('time'), // null 허용
+    area: searchParams.get('area'), // null 허용
+  };
+
+  const validatedParams = GetAIPredictionsRequestSchema.parse(queryParams);
+
+  switch (validatedParams.type) {
+    case 'heatmap': {
+      const response = {
         success: true,
         data: heatmapData,
-      });
-    case 'hourly':
-      return NextResponse.json({
+      };
+      const validatedResponse = HeatmapResponseSchema.parse(response);
+      return NextResponse.json(validatedResponse);
+    }
+    case 'hourly': {
+      const response = {
         success: true,
         data: hourlyPredictions,
-      });
+      };
+      const validatedResponse = HourlyPredictionsResponseSchema.parse(response);
+      return NextResponse.json(validatedResponse);
+    }
     case 'predictions':
-    default:
-      return NextResponse.json({
+    default: {
+      const response = {
         success: true,
         data: aiPredictions,
-      });
+      };
+      const validatedResponse = AIPredictionsResponseSchema.parse(response);
+      return NextResponse.json(validatedResponse);
+    }
   }
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { DeliveriesResponseSchema, GetDeliveriesRequestSchema } from '@/app/types/dto';
 
 // Mock 배달 내역 데이터
 const deliveries = [
@@ -190,24 +191,35 @@ const deliveries = [
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const date = searchParams.get('date');
-  const limit = searchParams.get('limit');
+
+  // 요청 파라미터 검증
+  const queryParams = {
+    date: searchParams.get('date'),
+    limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined,
+  };
+
+  const validatedParams = GetDeliveriesRequestSchema.parse(queryParams);
 
   let filteredDeliveries = deliveries;
 
   // 날짜 필터링
-  if (date) {
-    filteredDeliveries = deliveries.filter((delivery) => delivery.date === date);
+  if (validatedParams.date) {
+    filteredDeliveries = deliveries.filter((delivery) => delivery.date === validatedParams.date);
   }
 
   // 제한 수 적용
-  if (limit) {
-    filteredDeliveries = filteredDeliveries.slice(0, parseInt(limit));
+  if (validatedParams.limit) {
+    filteredDeliveries = filteredDeliveries.slice(0, validatedParams.limit);
   }
 
-  return NextResponse.json({
+  const response = {
     success: true,
     data: filteredDeliveries,
     total: filteredDeliveries.length,
-  });
+  };
+
+  // dto 스키마로 응답 검증
+  const validatedResponse = DeliveriesResponseSchema.parse(response);
+
+  return NextResponse.json(validatedResponse);
 }

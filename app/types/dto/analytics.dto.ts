@@ -43,11 +43,11 @@ export const MonthlyAnalysisSchema = z.object({
   dayOfWeekStats: z.array(DayOfWeekStatSchema),
 });
 
-// 분석 조회 요청
+// 분석 조회 요청 (null 값을 허용하도록 수정)
 export const GetAnalyticsRequestSchema = z.object({
-  type: z.enum(['weekly', 'monthly']).optional(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
+  type: z.enum(['weekly', 'monthly']).nullable().optional(),
+  startDate: z.string().nullable().optional(),
+  endDate: z.string().nullable().optional(),
 });
 
 // 주간 분석 응답

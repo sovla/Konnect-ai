@@ -1,8 +1,7 @@
 import { z } from 'zod';
-import { VehicleType } from '@/app/generated/prisma';
 import { BaseResponseSchema } from './common.dto';
 
-// 라이더 프로필 스키마
+// 라이더 프로필 스키마 (실제 API 데이터에 맞게 수정)
 export const RiderProfileSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -14,9 +13,9 @@ export const RiderProfileSchema = z.object({
   acceptanceRate: z.number(),
   avgDeliveryTime: z.number(), // 분 단위
   preferredAreas: z.array(z.string()),
-  vehicleType: z.nativeEnum(VehicleType),
+  vehicleType: z.string(), // API에서 'motorcycle' 등 문자열로 반환
   isOnline: z.boolean(),
-  onlineTime: z.string(), // "HH:MM" 형식 또는 시간(분 단위)
+  onlineTime: z.string(), // "HH:MM" 형식
 });
 
 // 플랫폼 평균 데이터

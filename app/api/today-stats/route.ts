@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { TodayStatsResponseSchema } from '@/app/types/dto';
 
 const todayStats = {
   date: '2025-01-14',
@@ -12,8 +13,13 @@ const todayStats = {
 };
 
 export async function GET() {
-  return NextResponse.json({
+  const response = {
     success: true,
     data: todayStats,
-  });
+  };
+
+  // dto 스키마로 응답 검증
+  const validatedResponse = TodayStatsResponseSchema.parse(response);
+
+  return NextResponse.json(validatedResponse);
 }

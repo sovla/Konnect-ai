@@ -21,11 +21,11 @@ export const DeliverySchema = z.object({
   deliveryTime: z.number().min(0), // 분 단위
 });
 
-// 배달 조회 요청
+// 배달 조회 요청 (null 값을 허용하도록 수정)
 export const GetDeliveriesRequestSchema = z.object({
-  date: z.string().optional(),
-  limit: z.number().min(1).max(100).optional(),
-  page: z.number().min(1).optional(),
+  date: z.string().nullable().optional(),
+  limit: z.number().min(1).max(100).nullable().optional(),
+  page: z.number().min(1).nullable().optional(),
 });
 
 // 배달 조회 응답

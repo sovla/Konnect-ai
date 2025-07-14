@@ -1,7 +1,12 @@
-import { MonthlyAnalysis, WeeklyStat } from '@/app/types';
 import { NextResponse } from 'next/server';
+import {
+  WeeklyAnalyticsResponseSchema,
+  MonthlyAnalyticsResponseSchema,
+  AnalyticsResponseSchema,
+  GetAnalyticsRequestSchema,
+} from '@/app/types/dto';
 
-const weeklyStats: WeeklyStat[] = [
+const weeklyStats = [
   { date: '2025-01-08', earnings: 145000, deliveries: 32 },
   { date: '2025-01-09', earnings: 132000, deliveries: 28 },
   { date: '2025-01-10', earnings: 156000, deliveries: 35 },
@@ -11,7 +16,7 @@ const weeklyStats: WeeklyStat[] = [
   { date: '2025-01-14', earnings: 26800, deliveries: 5 },
 ];
 
-const monthlyAnalysis: MonthlyAnalysis = {
+const monthlyAnalysis = {
   currentMonth: {
     month: '2025-01',
     totalEarnings: 2341000,
@@ -45,26 +50,41 @@ const monthlyAnalysis: MonthlyAnalysis = {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const type = searchParams.get('type'); // 'weekly', 'monthly'
 
-  switch (type) {
-    case 'weekly':
-      return NextResponse.json({
+  // 요청 파라미터 검증
+  const queryParams = {
+    type: searchParams.get('type'),
+  };
+
+  const validatedParams = GetAnalyticsRequestSchema.parse(queryParams);
+
+  switch (validatedParams.type) {
+    case 'weekly': {
+      const response = {
         success: true,
         data: weeklyStats,
-      });
-    case 'monthly':
-      return NextResponse.json({
+      };
+      const validatedResponse = WeeklyAnalyticsResponseSchema.parse(response);
+      return NextResponse.json(validatedResponse);
+    }
+    case 'monthly': {
+      const response = {
         success: true,
         data: monthlyAnalysis,
-      });
-    default:
-      return NextResponse.json({
+      };
+      const validatedResponse = MonthlyAnalyticsResponseSchema.parse(response);
+      return NextResponse.json(validatedResponse);
+    }
+    default: {
+      const response = {
         success: true,
         data: {
           weekly: weeklyStats,
           monthly: monthlyAnalysis,
         },
-      });
+      };
+      const validatedResponse = AnalyticsResponseSchema.parse(response);
+      return NextResponse.json(validatedResponse);
+    }
   }
 }

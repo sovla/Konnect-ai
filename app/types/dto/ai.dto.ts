@@ -72,11 +72,11 @@ export const AIRecommendationSchema = z.object({
   actionRequired: z.boolean(),
 });
 
-// AI 예측 조회 요청
+// AI 예측 조회 요청 (null 값을 허용하도록 수정)
 export const GetAIPredictionsRequestSchema = z.object({
   type: z.enum(['predictions', 'heatmap', 'hourly']).optional(),
-  time: z.string().optional(), // "HH:MM" 형식
-  area: z.string().optional(), // 특정 지역 필터
+  time: z.string().nullable().optional(), // null 허용
+  area: z.string().nullable().optional(), // null 허용
 });
 
 // AI 예측 응답들

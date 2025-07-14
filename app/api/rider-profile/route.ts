@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { RiderProfileResponseSchema } from '@/app/types/dto';
 
 const riderProfile = {
   id: 'rider-001',
@@ -26,11 +27,16 @@ const platformAverages = {
 };
 
 export async function GET() {
-  return NextResponse.json({
+  const response = {
     success: true,
     data: {
       rider: riderProfile,
       platformAverages: platformAverages,
     },
-  });
+  };
+
+  // dto 스키마로 응답 검증
+  const validatedResponse = RiderProfileResponseSchema.parse(response);
+
+  return NextResponse.json(validatedResponse);
 }

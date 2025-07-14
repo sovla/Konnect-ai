@@ -1,14 +1,13 @@
 import { z } from 'zod';
-import { AnnouncementType, Priority } from '@/app/generated/prisma';
 import { BaseResponseSchema, PaginationSchema } from './common.dto';
 
-// 공지사항 스키마
+// 공지사항 스키마 (실제 API 데이터에 맞게 수정)
 export const AnnouncementSchema = z.object({
   id: z.string(),
   title: z.string(),
   content: z.string(),
-  type: z.nativeEnum(AnnouncementType),
-  priority: z.nativeEnum(Priority),
+  type: z.string(), // API에서 'promotion', 'notice', 'incentive' 소문자로 반환
+  priority: z.string(), // API에서 'high', 'medium', 'low' 소문자로 반환
   startDate: z.string(), // ISO 날짜 문자열
   endDate: z.string(), // ISO 날짜 문자열
   isActive: z.boolean(),
@@ -16,11 +15,15 @@ export const AnnouncementSchema = z.object({
   updatedAt: z.date().optional(),
 });
 
-// 공지사항 조회 요청
+// Enum 정의 (실제 API 데이터에 맞는 소문자 값)
+export const AnnouncementTypeEnum = z.enum(['promotion', 'notice', 'incentive']);
+export const PriorityEnum = z.enum(['high', 'medium', 'low']);
+
+// 공지사항 조회 요청 (null 값을 허용하도록 수정)
 export const GetAnnouncementsRequestSchema = z.object({
-  type: z.nativeEnum(AnnouncementType).optional(),
-  active: z.boolean().optional(),
-  priority: z.nativeEnum(Priority).optional(),
+  type: z.string().nullable().optional(), // null 허용
+  active: z.string().nullable().optional(), // null 허용
+  priority: z.string().nullable().optional(), // null 허용
   page: z.number().min(1).optional(),
   limit: z.number().min(1).max(100).optional(),
 });
@@ -29,8 +32,8 @@ export const GetAnnouncementsRequestSchema = z.object({
 export const CreateAnnouncementRequestSchema = z.object({
   title: z.string().min(1, '제목을 입력해주세요.').max(200, '제목은 최대 200자까지 가능합니다.'),
   content: z.string().min(1, '내용을 입력해주세요.').max(2000, '내용은 최대 2000자까지 가능합니다.'),
-  type: z.nativeEnum(AnnouncementType),
-  priority: z.nativeEnum(Priority).default(Priority.MEDIUM),
+  type: AnnouncementTypeEnum,
+  priority: PriorityEnum.default('medium'),
   startDate: z.string().datetime('올바른 시작 날짜를 입력해주세요.'),
   endDate: z.string().datetime('올바른 종료 날짜를 입력해주세요.'),
   isActive: z.boolean().default(true),
@@ -54,8 +57,8 @@ export const AnnouncementStatsSchema = z.object({
   total: z.number(),
   active: z.number(),
   inactive: z.number(),
-  byType: z.record(z.nativeEnum(AnnouncementType), z.number()),
-  byPriority: z.record(z.nativeEnum(Priority), z.number()),
+  byType: z.record(z.string(), z.number()), // 타입별 카운트
+  byPriority: z.record(z.string(), z.number()), // 우선순위별 카운트
   expiringSoon: z.number(), // 7일 이내 만료
 });
 

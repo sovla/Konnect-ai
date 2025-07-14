@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { AnnouncementsResponseSchema, GetAnnouncementsRequestSchema } from '@/app/types/dto';
 
 const announcements = [
   {
@@ -35,23 +36,42 @@ const announcements = [
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const type = searchParams.get('type');
-  const active = searchParams.get('active');
+
+  // 요청 파라미터 검증
+  const queryParams = {
+    type: searchParams.get('type'),
+    active: searchParams.get('active'), // 문자열로 처리
+    priority: searchParams.get('priority'),
+  };
+
+  const validatedParams = GetAnnouncementsRequestSchema.parse(queryParams);
 
   let filteredAnnouncements = announcements;
 
   // 타입별 필터링
-  if (type) {
-    filteredAnnouncements = announcements.filter((announce) => announce.type === type);
+  if (validatedParams.type) {
+    filteredAnnouncements = announcements.filter((announce) => announce.type === validatedParams.type);
   }
 
   // 활성 상태 필터링
-  if (active === 'true') {
-    filteredAnnouncements = filteredAnnouncements.filter((announce) => announce.isActive);
+  if (validatedParams.active === 'true') {
+    filteredAnnouncements = filteredAnnouncements.filter((announce) => announce.isActive === true);
+  } else if (validatedParams.active === 'false') {
+    filteredAnnouncements = filteredAnnouncements.filter((announce) => announce.isActive === false);
   }
 
-  return NextResponse.json({
+  // 우선순위별 필터링
+  if (validatedParams.priority) {
+    filteredAnnouncements = filteredAnnouncements.filter((announce) => announce.priority === validatedParams.priority);
+  }
+
+  const response = {
     success: true,
     data: filteredAnnouncements,
-  });
+  };
+
+  // dto 스키마로 응답 검증
+  const validatedResponse = AnnouncementsResponseSchema.parse(response);
+
+  return NextResponse.json(validatedResponse);
 }
