@@ -9,7 +9,7 @@ export const KAKAO_MAP_API_KEY = process.env.NEXT_PUBLIC_KAKAO_MAP_API_KEY || ''
 // 지도 기본 설정
 export const DEFAULT_MAP_CENTER = {
   lat: 37.5665,
-  lng: 126.9780,
+  lng: 126.978,
 };
 
 export const DEFAULT_MAP_LEVEL = 3;
@@ -27,7 +27,7 @@ export const COLORS = {
 // 차트 색상
 export const CHART_COLORS = [
   '#3b82f6',
-  '#06b6d4', 
+  '#06b6d4',
   '#10b981',
   '#f59e0b',
   '#ef4444',
@@ -47,7 +47,7 @@ export const TIME_SLOTS = [
 // 배달 상태
 export const DELIVERY_STATUS = {
   PENDING: 'pending',
-  PICKED_UP: 'picked_up', 
+  PICKED_UP: 'picked_up',
   DELIVERED: 'delivered',
   CANCELLED: 'cancelled',
 } as const;
@@ -58,4 +58,4 @@ export const DELIVERY_STATUS_LABELS = {
   [DELIVERY_STATUS.PICKED_UP]: '배달 중',
   [DELIVERY_STATUS.DELIVERED]: '배달 완료',
   [DELIVERY_STATUS.CANCELLED]: '취소됨',
-} as const; 
+} as const;

@@ -54,4 +54,4 @@ export interface PredictionZone {
   expectedOrders: number;
   timeSlot: string;
   color: string;
-} 
+}
