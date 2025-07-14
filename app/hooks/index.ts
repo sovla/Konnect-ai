@@ -15,7 +15,12 @@ export {
   QUERY_KEYS,
 } from './useQueries';
 
+// 유틸리티 훅들
+export { useDebounce, useDebouncedValue } from './useDebounce';
+
+// 지도 관련 훅들
+export { useMapInteraction } from './useMapInteraction';
+
 // 향후 추가될 커스텀 훅들을 위한 공간
-// export { useMapInteraction } from './useMapInteraction';
 // export { useLocalStorage } from './useLocalStorage';
 // export { useWindowSize } from './useWindowSize';

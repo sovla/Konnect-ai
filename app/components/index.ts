@@ -17,3 +17,8 @@ export {
   PredictionSkeleton,
   AnnouncementSkeleton,
 } from './common/Skeleton';
+
+// Map Components
+export { default as PolygonInfoPopup } from './map/PolygonInfoPopup';
+export { default as HeatmapInfoPopup } from './map/HeatmapInfoPopup';
+export { default as HeatmapOverlay } from './map/HeatmapOverlay';

@@ -79,7 +79,7 @@ export const useMapStore = create<MapStore>()(
     (set, get) => ({
       // 초기 상태
       center: DEFAULT_CENTER,
-      zoom: 14,
+      zoom: 7,
       userLocation: null,
       aiPredictions: [],
       heatmapData: [],

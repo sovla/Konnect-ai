@@ -83,6 +83,16 @@ export interface AIPolygon {
   expectedCalls: number;
   avgFee: number;
   confidence: number;
+  reasons?: AIRecommendationReason[];
+}
+
+// AI 추천 이유 타입
+export interface AIRecommendationReason {
+  type: 'historical_data' | 'event' | 'weather' | 'time_pattern' | 'restaurant_density';
+  title: string;
+  description: string;
+  impact: 'high' | 'medium' | 'low';
+  confidence: number;
 }
 
 export interface AIPrediction {
@@ -95,6 +105,22 @@ export interface HeatmapData {
   lat: number;
   lng: number;
   weight: number;
+  id?: string;
+  recentOrders?: number;
+  avgWaitTime?: number;
+  hourlyTrend?: string;
+}
+
+// 히트맵 마커 클릭 정보 타입
+export interface HeatmapMarkerInfo {
+  id: string;
+  position: { lat: number; lng: number };
+  weight: number;
+  recentOrders: number;
+  avgWaitTime: number;
+  hourlyTrend: string;
+  nearbyRestaurants: string[];
+  peakTime: string;
 }
 
 export interface HourlyPrediction {
