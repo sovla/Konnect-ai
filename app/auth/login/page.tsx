@@ -9,7 +9,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { loginSchema, type LoginFormData } from '@/app/lib/schemas';
-import { RedirectIfAuthenticated } from '@/app/components';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -68,7 +67,7 @@ export default function LoginPage() {
   };
 
   return (
-    <RedirectIfAuthenticated>
+    <>
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           {/* 로고 및 제목 */}
@@ -214,6 +213,6 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
-    </RedirectIfAuthenticated>
+    </>
   );
 }
