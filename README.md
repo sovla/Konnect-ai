@@ -12,6 +12,7 @@
 
 - **Frontend**: Next.js 15, React 19, TypeScript
 - **상태관리**: Zustand + React Query
+- **지도**: react-kakao-maps-sdk (카카오맵 API)
 - **UI/차트**: Tremor, Tailwind CSS, Lucide Icons
 - **날짜처리**: date-fns
 - **개발도구**: ESLint, TypeScript
@@ -107,12 +108,17 @@ app/
 ### 환경변수
 
 ```env
+# 카카오맵 API 키 (JavaScript Key) - 필수
+NEXT_PUBLIC_KAKAO_MAP_API_KEY=YOUR_KAKAO_MAP_API_KEY_HERE
+
 # 데모 모드 강제 활성화 (선택사항)
 NEXT_PUBLIC_DEMO_MODE=true
 
 # API 기본 URL (기본값: /api)
 NEXT_PUBLIC_API_BASE_URL=/api
 ```
+
+> **참고**: `react-kakao-maps-sdk`를 사용하여 간편하고 안정적인 카카오맵 연동을 제공합니다.
 
 ### 날짜 디버그 정보 확인
 

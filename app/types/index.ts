@@ -161,3 +161,27 @@ export type AIPredictionResponse<T extends AIPredictionType | undefined> = T ext
   : T extends 'hourly'
   ? ApiResponse<HourlyPrediction[]>
   : ApiResponse<AIPrediction[]>;
+
+// 카카오맵 관련 타입들 (react-kakao-maps-sdk 사용)
+export interface MapMarkerData {
+  id: string;
+  position: {
+    lat: number;
+    lng: number;
+  };
+  title?: string;
+  content?: string;
+}
+
+export interface MapPolygonData {
+  id: string;
+  path: {
+    lat: number;
+    lng: number;
+  }[];
+  fillColor: string;
+  fillOpacity: number;
+  strokeColor: string;
+  strokeOpacity: number;
+  strokeWeight: number;
+}
