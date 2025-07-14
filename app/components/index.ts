@@ -6,6 +6,7 @@ export { default as DashboardLayout } from './layout/DashboardLayout';
 // Common Components
 export { default as DashboardCard } from './common/DashboardCard';
 export { DataWrapper, QueryWrapper } from './common/DataWrapper';
+export { default as DeliveryTable } from './common/DeliveryTable';
 export { default as KakaoMap } from './common/KakaoMap';
 export {
   Skeleton,
