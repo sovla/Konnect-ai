@@ -166,7 +166,7 @@ export default function Sidebar({ isOpen = true, onClose, isMobile = false }: Si
       {/* 하단 정보 */}
       <div className="p-4 border-t border-gray-200 bg-gray-50">
         <div className="text-center">
-          <p className="text-xs text-gray-500">딜버 파트너 대시보드</p>
+          <p className="text-xs text-gray-500">Konnect AI Dashboard</p>
           <p className="text-xs text-gray-400 mt-1">v1.0.0</p>
         </div>
       </div>
