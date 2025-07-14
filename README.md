@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+딜버 라이더를 위한 AI 기반 수익 & 효율 관리 대시보드
+ <!-- 실제 배포 주소로 변경하세요 -->
 
-## Getting Started
+더원인터내셔널 '딜버'의 라이더 파트너를 위한 데이터 기반 운행 전략 대시보드입니다. 라이더의 운행 데이터를 분석 및 시각화하고, AI 기반 예측 정보를 제공하여 라이더의 수익 증대와 효율적인 운행 관리를 돕는 것을 목표로 제작한 프론트엔드 포트폴리오 프로젝트입니다.
 
-First, run the development server:
+<br/>
 
-```bash
-npm run dev
+[!NOTE]
+이 프로젝트는 실제 딜버 서비스와는 무관하며, 오직 포트폴리오 제출을 위해 가상의 데이터와 시나리오를 바탕으로 제작되었습니다.
+
+<br/>
+
+🖼️ 주요 화면 스크린샷
+<!-- 프로젝트 완료 후, 실제 화면 스크린샷이나 GIF로 교체하세요 -->
+
+메인 대시보드
+
+AI 추천 운행 존 (지도)
+
+[메인 대시보드 이미지]
+
+[지도 페이지 이미지]
+
+상세 수익 분석
+
+반응형 모바일 화면
+
+[수익 분석 페이지 이미지]
+
+[모바일 화면 이미지]
+
+<br/>
+
+✨ 주요 기능
+🏠 실시간 대시보드: 오늘의 수입, 완료 건수, 목표 달성률 등 핵심 정보를 한눈에 파악할 수 있습니다.
+
+🗺️ AI 추천 운행 존: 카카오맵 API와 히트맵을 활용하여 실시간/예측 주문 밀집 지역을 시각적으로 제공합니다.
+
+📊 상세 수익 분석: 기간별 수익 트렌드, 수입 구성, 상세 내역을 다양한 차트와 테이블로 분석합니다.
+
+🚀 운행 효율 리포트: 콜 수락률, 평균 배달 시간 등 자신의 운행 효율을 객관적인 데이터로 확인하고 개선점을 찾을 수 있습니다.
+
+📱 반응형 디자인: PC, 태블릿, 모바일 등 모든 디바이스에서 최적화된 화면을 제공합니다.
+
+<br/>
+
+🛠️ 사용 기술
+<br/>
+
+⚙️ 시작하기
+# 1. 레포지토리 클론
+$ git clone https://github.com/your-username/dealver-partner-dashboard.git
+$ cd dealver-partner-dashboard
+
+# 2. 패키지 설치
+$ npm install
 # or
-yarn dev
+$ yarn install
+
+# 3. 환경 변수 설정
+# .env.local 파일을 생성하고 아래 내용을 채워주세요.
+# 카카오맵 API 키가 필요합니다.
+NEXT_PUBLIC_KAKAO_MAP_API_KEY=your_kakao_map_api_key
+
+# 4. 개발 서버 실행
+$ npm run dev
 # or
-pnpm dev
-# or
-bun dev
-```
+$ yarn dev
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+브라우저에서 http://localhost:3000으로 접속하세요.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+<br/>
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+📂 프로젝트 구조
+/src
+├── /app                 # Next.js 13+ App Router
+├── /apis                # API 호출 함수
+├── /components          # 공용 컴포넌트 (UI, Layout 등)
+├── /constants           # 상수 및 설정 값
+├── /hooks               # 커스텀 훅
+├── /store               # Recoil 상태 관리
+├── /styles              # 전역 스타일
+└── /types               # TypeScript 타입 정의
 
-## Learn More
+<br/>
 
-To learn more about Next.js, take a look at the following resources:
+🤔 고민과 해결 과정
+1. 왜 Next.js를 선택했는가?
+대시보드 특성상 초기 로딩 속도와 SEO의 중요성은 낮지만, 페이지별 코드 스플리팅, 최적화된 이미지 처리, 편리한 라우팅 시스템의 이점을 활용하기 위해 CRA 대신 Next.js를 선택했습니다. 이를 통해 향후 확장성(예: 라이더 커뮤니티 페이지 추가)까지 고려한 개발 환경을 구축했습니다.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. 전역 상태 관리
+수익 분석 페이지의 '기간 선택' 값처럼 여러 컴포넌트에서 공유해야 하는 상태를 효율적으로 관리하기 위해 Recoil을 도입했습니다. Redux에 비해 Boilerplate가 적고, React의 사용 방식과 유사하여 직관적인 개발이 가능했습니다.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+3. 데이터 시각화 라이브러리 선택
+다양한 차트를 구현하기 위해 Chart.js와 Recharts를 검토했습니다. 커스터마이징의 자유도와 가벼움을 고려하여 필요한 부분에 Chart.js를, 선언적인 컴포넌트 기반 개발의 편리함을 위해 다른 부분에는 Recharts를 조합하여 사용하며 각 라이브러리의 장점을 활용하고자 했습니다.
