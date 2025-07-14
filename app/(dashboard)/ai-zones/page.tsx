@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { KakaoMap } from '../components';
-import { useUIStore } from '../store/uiStore';
+import { KakaoMap } from '../../components';
+import { useUIStore } from '../../store/uiStore';
 import { ToggleLeft, ToggleRight, MapPin, Clock, Zap } from 'lucide-react';
 
 export default function AIZonesPage() {

@@ -7,10 +7,10 @@ import {
   HotspotSkeleton,
   PredictionSkeleton,
   AnnouncementSkeleton,
-} from './components';
+} from '../components';
 import { TrendingUp, MapPin, Clock, Bell } from 'lucide-react';
-import { useTodayStats, useAIPredictions, useAnnouncements } from './hooks/useQueries';
-import { formatCurrency } from './utils/dateHelpers';
+import { useTodayStats, useAIPredictions, useAnnouncements } from '../hooks/useQueries';
+import { formatCurrency } from '../utils/dateHelpers';
 
 export default function Dashboard() {
   // API 데이터 훅들
