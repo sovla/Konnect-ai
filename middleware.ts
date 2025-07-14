@@ -46,3 +46,6 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico|public/).*)',
   ],
 };
+
+// NextAuth + Prisma 조합을 위해 Node.js 런타임 사용
+export const runtime = 'nodejs';

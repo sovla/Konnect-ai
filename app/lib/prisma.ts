@@ -20,9 +20,9 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // 프로세스 종료 시 연결 해제
-// 서버 환경에서만 동작
-if (process) {
-  process.on?.('beforeExit', async () => {
+// Node.js 런타임에서만 동작 (Edge Runtime 제외)
+if (typeof process !== 'undefined' && process.on && typeof window === 'undefined') {
+  process.on('beforeExit', async () => {
     await prisma.$disconnect();
   });
 }
