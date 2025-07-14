@@ -1,103 +1,145 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { DashboardCard } from './components';
+import { TrendingUp, MapPin, Clock, Bell } from 'lucide-react';
+
+export default function Dashboard() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">메인 대시보드</h1>
+        <p className="text-gray-600">오늘도 좋은 하루 되세요, 김딜버님!</p>
+      </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      {/* 4개 위젯 그리드 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* 위젯 1: 오늘의 성과 */}
+        <DashboardCard title="오늘의 성과" icon={TrendingUp}>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">실시간 총수입</span>
+              <span className="text-2xl font-bold text-blue-600">₩112,500</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">완료 건수</span>
+              <span className="text-lg font-semibold">25건</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">온라인 시간</span>
+              <span className="text-lg font-semibold">06:30:45</span>
+            </div>
+
+            {/* 일일 목표 달성률 */}
+            <div className="pt-2">
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-gray-600">일일 목표 달성률</span>
+                <span className="font-medium text-green-600">75%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="bg-green-500 h-2 rounded-full" style={{ width: '75%' }}></div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">목표까지 ₩37,500 남았습니다</p>
+            </div>
+          </div>
+        </DashboardCard>
+
+        {/* 위젯 2: AI 추천 핫스팟 */}
+        <DashboardCard title="AI 추천 핫스팟" icon={MapPin}>
+          <div className="space-y-4">
+            <div className="bg-gray-100 h-32 rounded-lg flex items-center justify-center">
+              <div className="text-center">
+                <MapPin className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">카카오맵 미니맵</p>
+                <p className="text-xs text-gray-400">추후 구현 예정</p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between p-2 bg-red-50 rounded">
+                <span className="text-sm font-medium">해운대 센텀시티</span>
+                <span className="text-xs text-red-600 font-medium">HOT</span>
+              </div>
+              <div className="flex items-center justify-between p-2 bg-orange-50 rounded">
+                <span className="text-sm font-medium">서면 롯데백화점</span>
+                <span className="text-xs text-orange-600 font-medium">WARM</span>
+              </div>
+            </div>
+          </div>
+        </DashboardCard>
+
+        {/* 위젯 3: 시간대별 콜 예측 */}
+        <DashboardCard title="시간대별 콜 예측" icon={Clock}>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">지금부터 3시간 동안의 콜 예측</p>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">14:00 - 15:00</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-16 bg-gray-200 rounded-full h-2">
+                    <div className="bg-green-500 h-2 rounded-full" style={{ width: '80%' }}></div>
+                  </div>
+                  <span className="text-sm font-medium text-green-600">많음</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">15:00 - 16:00</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-16 bg-gray-200 rounded-full h-2">
+                    <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '60%' }}></div>
+                  </div>
+                  <span className="text-sm font-medium text-yellow-600">보통</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">16:00 - 17:00</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-16 bg-gray-200 rounded-full h-2">
+                    <div className="bg-red-500 h-2 rounded-full" style={{ width: '40%' }}></div>
+                  </div>
+                  <span className="text-sm font-medium text-red-600">적음</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </DashboardCard>
+
+        {/* 위젯 4: 주요 공지 */}
+        <DashboardCard title="주요 공지" icon={Bell}>
+          <div className="space-y-3">
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-blue-900">점심시간 프로모션 진행중!</h4>
+                  <p className="text-sm text-blue-700 mt-1">12:00-14:00 기본료 +500원 추가 지급</p>
+                  <p className="text-xs text-blue-600 mt-2">2시간 남음</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-green-900">신규 배달존 오픈</h4>
+                  <p className="text-sm text-green-700 mt-1">광안리 해변가 신규 오픈 기념 이벤트</p>
+                  <p className="text-xs text-green-600 mt-2">7월 15일까지</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2"></div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-yellow-900">정산 일정 안내</h4>
+                  <p className="text-sm text-yellow-700 mt-1">이번 주 정산: 7월 18일 (목)</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </DashboardCard>
+      </div>
     </div>
   );
 }
