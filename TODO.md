@@ -277,3 +277,6 @@
 - 2025-07-14: 사용자 인증 시스템 구현 완료 (NextAuth.js v5 + Prisma Adapter, Credentials Provider, bcrypt 해싱, 세션 관리)
 - 2025-07-14: 사용자 인증 페이지 구현 완료 (로그인/회원가입/비밀번호 재설정 페이지, 라이더 온보딩 플로우, 인증 가드 컴포넌트)
 - 2025-07-14: Layout Group 구조 도입 (app/(dashboard) 그룹 생성, 자동 DashboardLayout 적용, 코드 중복 제거, 유지보수성 향상)
+- 2025-07-14: Edge Runtime 호환성 문제 해결 (prisma.ts의 process.on 완전 제거, middleware.ts에 Node.js 런타임 명시, Next.js 15 호환성 향상)
+- 2025-07-14: NextAuth 로그인 디버깅 강화 (auth.ts에 상세 로깅 추가, CredentialsSignin 에러 추적을 위한 단계별 검증 로그)
+- 2025-07-14: Header 로그아웃 기능 및 인증 훅 구현 (useAuth/useNotifications 커스텀 훅 추가, react-query 뮤테이션 기반 로그아웃, 실제 사용자 정보 표시)
