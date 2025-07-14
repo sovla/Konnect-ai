@@ -9,11 +9,15 @@ interface AppSettings {
   id: string;
   theme: 'LIGHT' | 'DARK' | 'SYSTEM';
   language: 'KOREAN' | 'ENGLISH';
-  mapType: string;
-  showTraffic: boolean;
-  autoZoom: boolean;
-  privacyPolicyAcceptedAt: string | null;
-  termsAcceptedAt: string | null;
+  mapDefaultZoom: number;
+  mapDefaultLat: number;
+  mapDefaultLng: number;
+  mapTrafficLayer: boolean;
+  mapTransitLayer: boolean;
+  privacyAccepted: boolean;
+  termsAccepted: boolean;
+  privacyDate: string | null;
+  termsDate: string | null;
 }
 
 export default function AppSettingsPage() {
@@ -56,7 +60,7 @@ export default function AppSettingsPage() {
     }
   }, [settings]);
 
-  const handleInputChange = (field: keyof AppSettings, value: string | boolean) => {
+  const handleInputChange = (field: keyof AppSettings, value: string | boolean | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setHasChanges(true);
   };
@@ -219,41 +223,45 @@ export default function AppSettingsPage() {
 
         <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">지도 타입</label>
-            <select
-              value={formData.mapType || 'normal'}
-              onChange={(e) => handleInputChange('mapType', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="normal">일반 지도</option>
-              <option value="satellite">위성 지도</option>
-              <option value="hybrid">하이브리드</option>
-            </select>
+            <label className="block text-sm font-medium text-gray-700 mb-3">기본 줌 레벨</label>
+            <input
+              type="range"
+              min="8"
+              max="18"
+              value={formData.mapDefaultZoom || 12}
+              onChange={(e) => handleInputChange('mapDefaultZoom', parseInt(e.target.value))}
+              className="w-full"
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>8 (전체)</span>
+              <span>{formData.mapDefaultZoom || 12}</span>
+              <span>18 (상세)</span>
+            </div>
           </div>
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-sm font-medium text-gray-900">교통정보 표시</span>
+                <span className="text-sm font-medium text-gray-900">교통정보 레이어</span>
                 <p className="text-xs text-gray-500">지도에 실시간 교통정보를 표시합니다</p>
               </div>
               <input
                 type="checkbox"
-                checked={formData.showTraffic || false}
-                onChange={(e) => handleInputChange('showTraffic', e.target.checked)}
+                checked={formData.mapTrafficLayer || false}
+                onChange={(e) => handleInputChange('mapTrafficLayer', e.target.checked)}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-sm font-medium text-gray-900">자동 줌 조정</span>
-                <p className="text-xs text-gray-500">배달 경로에 따라 자동으로 지도를 확대/축소합니다</p>
+                <span className="text-sm font-medium text-gray-900">대중교통 레이어</span>
+                <p className="text-xs text-gray-500">지하철, 버스 등 대중교통 정보를 표시합니다</p>
               </div>
               <input
                 type="checkbox"
-                checked={formData.autoZoom || false}
-                onChange={(e) => handleInputChange('autoZoom', e.target.checked)}
+                checked={formData.mapTransitLayer || false}
+                onChange={(e) => handleInputChange('mapTransitLayer', e.target.checked)}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
             </div>
@@ -273,10 +281,10 @@ export default function AppSettingsPage() {
             <div>
               <span className="text-sm font-medium text-gray-900">개인정보 처리방침</span>
               <p className="text-xs text-gray-500">
-                동의일:{' '}
-                {formData.privacyPolicyAcceptedAt
-                  ? new Date(formData.privacyPolicyAcceptedAt).toLocaleDateString()
-                  : '미동의'}
+                동의 여부: {formData.privacyAccepted ? '동의함' : '미동의'}
+                {formData.privacyDate && (
+                  <span className="block">동의일: {new Date(formData.privacyDate).toLocaleDateString()}</span>
+                )}
               </p>
             </div>
             <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">보기</button>
@@ -286,7 +294,10 @@ export default function AppSettingsPage() {
             <div>
               <span className="text-sm font-medium text-gray-900">이용약관</span>
               <p className="text-xs text-gray-500">
-                동의일: {formData.termsAcceptedAt ? new Date(formData.termsAcceptedAt).toLocaleDateString() : '미동의'}
+                동의 여부: {formData.termsAccepted ? '동의함' : '미동의'}
+                {formData.termsDate && (
+                  <span className="block">동의일: {new Date(formData.termsDate).toLocaleDateString()}</span>
+                )}
               </p>
             </div>
             <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">보기</button>

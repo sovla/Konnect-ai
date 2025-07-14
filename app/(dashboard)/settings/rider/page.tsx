@@ -7,18 +7,16 @@ import Link from 'next/link';
 
 interface RiderSettings {
   id: string;
-  dailyGoalAmount: number;
-  monthlyGoalAmount: number;
+  dailyGoal: number;
+  monthlyGoal: number;
   minOrderAmount: number;
-  preferredStartTime: string;
-  preferredEndTime: string;
-  maxDeliveryDistance: number;
-  autoAcceptOrders: boolean;
+  workingHours: { start: number; end: number };
+  maxDistance: number;
+  autoAccept: boolean;
   pushNewOrder: boolean;
   pushGoalAchieve: boolean;
   pushPromotion: boolean;
-  emailDailySummary: boolean;
-  emailWeeklySummary: boolean;
+  emailSummary: boolean;
   emailMarketing: boolean;
 }
 
@@ -62,9 +60,18 @@ export default function RiderSettingsPage() {
     }
   }, [settings]);
 
-  const handleInputChange = (field: keyof RiderSettings, value: string | number | boolean) => {
+  const handleInputChange = (
+    field: keyof RiderSettings,
+    value: string | number | boolean | { start: number; end: number },
+  ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setHasChanges(true);
+  };
+
+  const handleWorkingHoursChange = (type: 'start' | 'end', value: number) => {
+    const currentHours = formData.workingHours || { start: 9, end: 21 };
+    const newHours = { ...currentHours, [type]: value };
+    handleInputChange('workingHours', newHours);
   };
 
   const handleSave = async () => {
@@ -147,8 +154,8 @@ export default function RiderSettingsPage() {
               <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="number"
-                value={formData.dailyGoalAmount || 0}
-                onChange={(e) => handleInputChange('dailyGoalAmount', parseInt(e.target.value) || 0)}
+                value={formData.dailyGoal || 0}
+                onChange={(e) => handleInputChange('dailyGoal', parseInt(e.target.value) || 0)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="100000"
                 min="0"
@@ -164,8 +171,8 @@ export default function RiderSettingsPage() {
               <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="number"
-                value={formData.monthlyGoalAmount || 0}
-                onChange={(e) => handleInputChange('monthlyGoalAmount', parseInt(e.target.value) || 0)}
+                value={formData.monthlyGoal || 0}
+                onChange={(e) => handleInputChange('monthlyGoal', parseInt(e.target.value) || 0)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="3000000"
                 min="0"
@@ -204,12 +211,12 @@ export default function RiderSettingsPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">최대 배달 거리</label>
               <input
                 type="number"
-                value={formData.maxDeliveryDistance || 0}
-                onChange={(e) => handleInputChange('maxDeliveryDistance', parseFloat(e.target.value) || 0)}
+                value={formData.maxDistance || 0}
+                onChange={(e) => handleInputChange('maxDistance', parseInt(e.target.value) || 0)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="5.0"
+                placeholder="5"
                 min="0"
-                step="0.5"
+                step="1"
               />
               <p className="text-sm text-gray-500 mt-1">km</p>
             </div>
@@ -218,8 +225,8 @@ export default function RiderSettingsPage() {
               <input
                 type="checkbox"
                 id="autoAccept"
-                checked={formData.autoAcceptOrders || false}
-                onChange={(e) => handleInputChange('autoAcceptOrders', e.target.checked)}
+                checked={formData.autoAccept || false}
+                onChange={(e) => handleInputChange('autoAccept', e.target.checked)}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
               <label htmlFor="autoAccept" className="ml-2 text-sm text-gray-700">
@@ -235,12 +242,17 @@ export default function RiderSettingsPage() {
                 <label className="block text-xs text-gray-500 mb-1">시작 시간</label>
                 <div className="relative">
                   <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="time"
-                    value={formData.preferredStartTime || '09:00'}
-                    onChange={(e) => handleInputChange('preferredStartTime', e.target.value)}
+                  <select
+                    value={formData.workingHours?.start || 9}
+                    onChange={(e) => handleWorkingHoursChange('start', parseInt(e.target.value))}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
+                  >
+                    {Array.from({ length: 24 }, (_, i) => (
+                      <option key={i} value={i}>
+                        {i.toString().padStart(2, '0')}:00
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -248,12 +260,17 @@ export default function RiderSettingsPage() {
                 <label className="block text-xs text-gray-500 mb-1">종료 시간</label>
                 <div className="relative">
                   <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="time"
-                    value={formData.preferredEndTime || '21:00'}
-                    onChange={(e) => handleInputChange('preferredEndTime', e.target.value)}
+                  <select
+                    value={formData.workingHours?.end || 21}
+                    onChange={(e) => handleWorkingHoursChange('end', parseInt(e.target.value))}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
+                  >
+                    {Array.from({ length: 24 }, (_, i) => (
+                      <option key={i} value={i}>
+                        {i.toString().padStart(2, '0')}:00
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
@@ -318,26 +335,13 @@ export default function RiderSettingsPage() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-sm text-gray-900">일일 요약</span>
-                  <p className="text-xs text-gray-500">매일 운행 결과 요약을 이메일로 받습니다</p>
+                  <span className="text-sm text-gray-900">요약 이메일</span>
+                  <p className="text-xs text-gray-500">운행 결과 요약을 이메일로 받습니다</p>
                 </div>
                 <input
                   type="checkbox"
-                  checked={formData.emailDailySummary || false}
-                  onChange={(e) => handleInputChange('emailDailySummary', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-sm text-gray-900">주간 요약</span>
-                  <p className="text-xs text-gray-500">매주 운행 통계를 이메일로 받습니다</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={formData.emailWeeklySummary || false}
-                  onChange={(e) => handleInputChange('emailWeeklySummary', e.target.checked)}
+                  checked={formData.emailSummary || false}
+                  onChange={(e) => handleInputChange('emailSummary', e.target.checked)}
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
               </div>
