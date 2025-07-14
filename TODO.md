@@ -3,9 +3,9 @@
 ## 📋 진행 상황
 
 - **전체 작업**: 18개
-- **완료**: 3개
+- **완료**: 4개
 - **진행 중**: 0개
-- **대기 중**: 15개
+- **대기 중**: 14개
 
 ---
 
@@ -41,9 +41,12 @@
 
 ### 2단계: 데이터 및 상태 관리
 
-- [ ] **Mock 데이터 및 JSON Server 설정**
+- [x] **Mock 데이터 및 Next.js API 라우트 설정** `(완료)`
 
-  - 배달 내역, 라이더 프로필, AI 예측 데이터
+  - ✅ 배달 내역, 라이더 프로필, AI 예측 데이터 생성
+  - ✅ Next.js API 라우트로 Mock 데이터 제공 (/api/deliveries, /api/rider-profile 등)
+  - ✅ TypeScript 타입 정의 완료
+  - ✅ API 클라이언트 함수 구현
   - 의존성: 폴더 구조 생성
 
 - [ ] **Zustand 상태 관리 및 React-Query 설정**
@@ -141,3 +144,4 @@
 - 2025-07-14: 차트 라이브러리를 Tremor로 확정
 - 2025-07-14: 프로젝트 폴더 구조 생성 완료
 - 2025-07-14: 공통 레이아웃 컴포넌트 구현 완료 (Header, Sidebar, DashboardLayout, DashboardCard)
+- 2025-07-14: Mock 데이터 및 Next.js API 라우트 설정 완료 (JSON Server 대신 Next.js API 라우트 사용)

@@ -8,50 +8,140 @@ export interface ApiResponse<T = unknown> {
 }
 
 // 라이더 관련 타입들
-export interface Rider {
+export interface RiderProfile {
   id: string;
   name: string;
-  phone: string;
-  vehicle: 'motorcycle' | 'bicycle' | 'car';
-  rating: number;
+  dailyGoal: number;
+  monthlyGoal: number;
+  joinDate: string;
   totalDeliveries: number;
+  averageRating: number;
+  acceptanceRate: number;
+  avgDeliveryTime: number;
+  preferredAreas: string[];
+  vehicleType: 'motorcycle' | 'bicycle' | 'car';
+  isOnline: boolean;
+  onlineTime: string;
+}
+
+export interface PlatformAverages {
+  acceptanceRate: number;
+  avgDeliveryTime: number;
+  avgDailyEarnings: number;
+  avgMonthlyEarnings: number;
+  avgRating: number;
+  avgDeliveriesPerDay: number;
 }
 
 // 배달 관련 타입들
 export interface Delivery {
   id: string;
-  riderId: string;
-  orderTime: string;
-  pickupTime?: string;
-  deliveryTime?: string;
-  status: 'pending' | 'picked_up' | 'delivered' | 'cancelled';
-  fee: number;
-  distance: number;
-  coordinates: {
-    pickup: { lat: number; lng: number };
-    delivery: { lat: number; lng: number };
+  date: string;
+  completedAt: string;
+  pickup: {
+    address: string;
+    lat: number;
+    lng: number;
   };
+  dropoff: {
+    address: string;
+    lat: number;
+    lng: number;
+  };
+  earnings: {
+    base: number;
+    promo: number;
+    tip: number;
+    total: number;
+  };
+  rating: number;
+  deliveryTime: number;
 }
 
-// 대시보드 관련 타입들
-export interface DashboardStats {
-  todayEarnings: number;
-  todayDeliveries: number;
-  averageRating: number;
-  totalDistance: number;
+// 오늘의 통계 타입
+export interface TodayStats {
+  date: string;
+  totalEarnings: number;
+  completedDeliveries: number;
+  onlineTime: string;
+  goalProgress: number;
+  avgEarningsPerDelivery: number;
+  acceptanceRate: number;
+  currentStreak: number;
+}
+
+// AI 예측 관련 타입들
+export interface AIPolygon {
+  name: string;
+  coords: [number, number][];
+  expectedCalls: number;
+  avgFee: number;
+  confidence: number;
+}
+
+export interface AIPrediction {
+  time: string;
+  polygons: AIPolygon[];
 }
 
 // 지도 관련 타입들
 export interface HeatmapData {
   lat: number;
   lng: number;
-  intensity: number;
+  weight: number;
 }
 
-export interface PredictionZone {
+export interface HourlyPrediction {
+  hour: number;
+  expectedCalls: number;
+  confidence: number;
+}
+
+// 공지사항 타입
+export interface Announcement {
   id: string;
-  coordinates: { lat: number; lng: number }[];
-  expectedOrders: number;
-  timeSlot: string;
-  color: string;
+  title: string;
+  content: string;
+  type: 'promotion' | 'notice' | 'incentive';
+  priority: 'high' | 'medium' | 'low';
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+}
+
+// 수익 분석 타입들
+export interface WeeklyStat {
+  date: string;
+  earnings: number;
+  deliveries: number;
+}
+
+export interface DayOfWeekStat {
+  day: string;
+  avgEarnings: number;
+  avgDeliveries: number;
+}
+
+export interface MonthlyAnalysis {
+  currentMonth: {
+    month: string;
+    totalEarnings: number;
+    totalDeliveries: number;
+    workingDays: number;
+    avgDailyEarnings: number;
+    goalProgress: number;
+    earningsBreakdown: {
+      base: number;
+      promo: number;
+      tip: number;
+    };
+  };
+  lastMonth: {
+    month: string;
+    totalEarnings: number;
+    totalDeliveries: number;
+    workingDays: number;
+    avgDailyEarnings: number;
+  };
+  dayOfWeekStats: DayOfWeekStat[];
 }
