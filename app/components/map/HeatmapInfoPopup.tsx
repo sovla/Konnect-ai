@@ -5,7 +5,7 @@ import { CustomOverlayMap } from 'react-kakao-maps-sdk';
 interface HeatmapInfoPopupProps {
   recentOrders: number;
   avgWaitTime: number;
-  hourlyTrend: string;
+  hourlyTrend: 'rising' | 'stable' | 'falling' | 'empty';
   position: { lat: number; lng: number };
   onClose: () => void;
 }
@@ -40,16 +40,22 @@ export default function HeatmapInfoPopup({
             <span className="text-gray-600">시간대 트렌드:</span>
             <span
               className={`font-medium ${
-                hourlyTrend === '매우 증가'
+                hourlyTrend === 'rising'
                   ? 'text-red-600'
-                  : hourlyTrend === '증가'
+                  : hourlyTrend === 'stable'
                   ? 'text-orange-600'
-                  : hourlyTrend === '안정'
+                  : hourlyTrend === 'falling'
                   ? 'text-green-600'
                   : 'text-gray-600'
               }`}
             >
-              {hourlyTrend}
+              {hourlyTrend === 'rising'
+                ? '매우 증가'
+                : hourlyTrend === 'stable'
+                ? '안정'
+                : hourlyTrend === 'falling'
+                ? '감소'
+                : '없음'}
             </span>
           </div>
         </div>

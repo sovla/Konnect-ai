@@ -108,7 +108,7 @@ export interface HeatmapData {
   id?: string;
   recentOrders?: number;
   avgWaitTime?: number;
-  hourlyTrend?: string;
+  hourlyTrend?: 'rising' | 'stable' | 'falling' | 'empty';
 }
 
 // 히트맵 마커 클릭 정보 타입

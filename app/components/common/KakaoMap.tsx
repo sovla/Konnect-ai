@@ -129,7 +129,7 @@ export default function KakaoMap({ width = '100%', height = '400px', className =
                     lng: point.lng,
                     recentOrders: point.recentOrders || 0,
                     avgWaitTime: point.avgWaitTime || 0,
-                    hourlyTrend: point.hourlyTrend || '정보 없음',
+                    hourlyTrend: point.hourlyTrend || 'empty',
                   })
                 }
               />

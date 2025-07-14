@@ -20,7 +20,7 @@ interface HeatmapClickInfo {
   id: string;
   recentOrders: number;
   avgWaitTime: number;
-  hourlyTrend: string;
+  hourlyTrend: 'rising' | 'stable' | 'falling' | 'empty';
   position: { lat: number; lng: number };
 }
 
@@ -107,7 +107,7 @@ export function useMapInteraction() {
       lng: number;
       recentOrders: number;
       avgWaitTime: number;
-      hourlyTrend: string;
+      hourlyTrend: 'rising' | 'stable' | 'falling' | 'empty';
     }) => {
       setClickedHeatmapInfo({
         id: heatmapPoint.id,
