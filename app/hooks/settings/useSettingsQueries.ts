@@ -105,7 +105,7 @@ export const useSettingsOverview = () => {
       if (!response.ok) {
         throw new Error('설정 정보를 불러오는데 실패했습니다.');
       }
-      return response.json();
+      return response.json() as Promise<UserSettingsResponse>;
     },
   });
 };

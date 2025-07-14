@@ -2,15 +2,14 @@
 
 import Link from 'next/link';
 import { User, Truck, Monitor, Key, Trash2, ChevronRight, CheckCircle, XCircle, Clock } from 'lucide-react';
-import { useSettingsOverview } from '@/app/hooks';
+import { useAppSettings, useRiderSettings, useUserProfile } from '@/app/hooks';
+import { QueryWrapper } from '@/app/components/common/DataWrapper';
 
 export default function SettingsOverviewPage() {
-  const { data, isLoading } = useSettingsOverview();
-  console.log(data);
-  if (isLoading) {
-    return null;
-  }
-  return null;
+  const profileQuery = useUserProfile();
+  const riderQuery = useRiderSettings();
+  const appQuery = useAppSettings();
+
   return (
     <div className="space-y-6">
       {/* 페이지 헤더 */}
@@ -37,37 +36,43 @@ export default function SettingsOverviewPage() {
               <ChevronRight className="h-5 w-5 text-gray-400" />
             </div>
 
-            {profileQuery.isLoading ? (
-              <div className="mt-4 space-y-2">
-                <div className="animate-pulse bg-gray-200 h-4 rounded"></div>
-                <div className="animate-pulse bg-gray-200 h-4 rounded"></div>
-                <div className="animate-pulse bg-gray-200 h-4 rounded"></div>
-              </div>
-            ) : profileQuery.data ? (
-              <div className="mt-4 space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">이름</span>
-                  <span className="font-medium">{profileQuery.data.user.name}</span>
+            <QueryWrapper
+              query={profileQuery}
+              loadingMessage="프로필 정보 로딩 중..."
+              errorMessage="프로필 데이터 로드 실패"
+              loadingSize="sm"
+              loadingSkeleton={
+                <div className="mt-4 space-y-2">
+                  <div className="animate-pulse bg-gray-200 h-4 rounded"></div>
+                  <div className="animate-pulse bg-gray-200 h-4 rounded"></div>
+                  <div className="animate-pulse bg-gray-200 h-4 rounded"></div>
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">이메일</span>
-                  <div className="flex items-center">
-                    {profileQuery.data.user.emailVerified ? (
-                      <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-red-500 mr-1" />
-                    )}
-                    <span className="font-medium truncate max-w-24">{profileQuery.data.user.email}</span>
+              }
+            >
+              {(profileData) => (
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">이름</span>
+                    <span className="font-medium">{profileData.name}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">이메일</span>
+                    <div className="flex items-center">
+                      {profileData.emailVerified ? (
+                        <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-red-500 mr-1" />
+                      )}
+                      <span className="font-medium truncate max-w-24">{profileData.email}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">전화번호</span>
+                    <span className="font-medium">{profileData.phone || '미등록'}</span>
                   </div>
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">전화번호</span>
-                  <span className="font-medium">{profileQuery.data.user.phone || '미등록'}</span>
-                </div>
-              </div>
-            ) : (
-              <div className="mt-4 text-sm text-red-600">데이터 로드 실패</div>
-            )}
+              )}
+            </QueryWrapper>
 
             <Link
               href="/settings/profile"
@@ -94,47 +99,49 @@ export default function SettingsOverviewPage() {
               <ChevronRight className="h-5 w-5 text-gray-400" />
             </div>
 
-            {riderQuery.isLoading ? (
-              <div className="mt-4 space-y-2">
-                <div className="animate-pulse bg-gray-200 h-4 rounded"></div>
-                <div className="animate-pulse bg-gray-200 h-4 rounded"></div>
-                <div className="animate-pulse bg-gray-200 h-4 rounded"></div>
-              </div>
-            ) : riderQuery.data ? (
-              <div className="mt-4 space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">일일 목표</span>
-                  <span className="font-medium">
-                    {new Intl.NumberFormat('ko-KR').format(riderQuery.data.riderProfile.dailyGoal)}원
-                  </span>
+            <QueryWrapper
+              query={riderQuery}
+              loadingMessage="라이더 설정 로딩 중..."
+              errorMessage="라이더 데이터 로드 실패"
+              loadingSize="sm"
+              loadingSkeleton={
+                <div className="mt-4 space-y-2">
+                  <div className="animate-pulse bg-gray-200 h-4 rounded"></div>
+                  <div className="animate-pulse bg-gray-200 h-4 rounded"></div>
+                  <div className="animate-pulse bg-gray-200 h-4 rounded"></div>
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">차량 유형</span>
-                  <span className="font-medium">
-                    {riderQuery.data.riderProfile.vehicleType === 'MOTORCYCLE'
-                      ? '오토바이'
-                      : riderQuery.data.riderProfile.vehicleType === 'BICYCLE'
-                      ? '자전거'
-                      : '자동차'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">푸시 알림</span>
-                  <div className="flex items-center">
-                    {riderQuery.data.riderProfile.pushNewOrder ? (
-                      <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-red-500 mr-1" />
-                    )}
+              }
+            >
+              {(riderData) => (
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">일일 목표</span>
+                    <span className="font-medium">{new Intl.NumberFormat('ko-KR').format(riderData.dailyGoal)}원</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">차량 유형</span>
                     <span className="font-medium">
-                      {riderQuery.data.riderProfile.pushNewOrder ? '활성화' : '비활성화'}
+                      {riderData.vehicleType === 'MOTORCYCLE'
+                        ? '오토바이'
+                        : riderData.vehicleType === 'BICYCLE'
+                        ? '자전거'
+                        : '자동차'}
                     </span>
                   </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">푸시 알림</span>
+                    <div className="flex items-center">
+                      {riderData.pushNewOrder ? (
+                        <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-red-500 mr-1" />
+                      )}
+                      <span className="font-medium">{riderData.pushNewOrder ? '활성화' : '비활성화'}</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="mt-4 text-sm text-red-600">데이터 로드 실패</div>
-            )}
+              )}
+            </QueryWrapper>
 
             <Link
               href="/settings/rider"
@@ -161,47 +168,45 @@ export default function SettingsOverviewPage() {
               <ChevronRight className="h-5 w-5 text-gray-400" />
             </div>
 
-            {appQuery.isLoading ? (
-              <div className="mt-4 space-y-2">
-                <div className="animate-pulse bg-gray-200 h-4 rounded"></div>
-                <div className="animate-pulse bg-gray-200 h-4 rounded"></div>
-                <div className="animate-pulse bg-gray-200 h-4 rounded"></div>
-              </div>
-            ) : appQuery.data ? (
-              <div className="mt-4 space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">테마</span>
-                  <span className="font-medium">
-                    {appQuery.data.userSettings.theme === 'LIGHT'
-                      ? '밝음'
-                      : appQuery.data.userSettings.theme === 'DARK'
-                      ? '어둠'
-                      : '시스템'}
-                  </span>
+            <QueryWrapper
+              query={appQuery}
+              loadingMessage="앱 설정 로딩 중..."
+              errorMessage="앱 설정 데이터 로드 실패"
+              loadingSize="sm"
+              loadingSkeleton={
+                <div className="mt-4 space-y-2">
+                  <div className="animate-pulse bg-gray-200 h-4 rounded"></div>
+                  <div className="animate-pulse bg-gray-200 h-4 rounded"></div>
+                  <div className="animate-pulse bg-gray-200 h-4 rounded"></div>
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">언어</span>
-                  <span className="font-medium">
-                    {appQuery.data.userSettings.language === 'KOREAN' ? '한국어' : '영어'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">지도 레이어</span>
-                  <div className="flex items-center">
-                    {appQuery.data.userSettings.mapTrafficLayer ? (
-                      <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-red-500 mr-1" />
-                    )}
+              }
+            >
+              {(appData) => (
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">테마</span>
                     <span className="font-medium">
-                      {appQuery.data.userSettings.mapTrafficLayer ? '교통정보' : '기본'}
+                      {appData.theme === 'LIGHT' ? '밝음' : appData.theme === 'DARK' ? '어둠' : '시스템'}
                     </span>
                   </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">언어</span>
+                    <span className="font-medium">{appData.language === 'KOREAN' ? '한국어' : '영어'}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">지도 레이어</span>
+                    <div className="flex items-center">
+                      {appData.mapTrafficLayer ? (
+                        <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-red-500 mr-1" />
+                      )}
+                      <span className="font-medium">{appData.mapTrafficLayer ? '교통정보' : '기본'}</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="mt-4 text-sm text-red-600">데이터 로드 실패</div>
-            )}
+              )}
+            </QueryWrapper>
 
             <Link
               href="/settings/app"
