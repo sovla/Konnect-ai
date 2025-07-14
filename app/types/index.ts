@@ -219,3 +219,39 @@ export type AnalyticsResponse<T extends AnalyticsType | undefined> = T extends '
   : T extends 'monthly'
   ? ApiResponse<MonthlyAnalysis>
   : ApiResponse<{ weekly: WeeklyStat[]; monthly: MonthlyAnalysis }>;
+
+// 인증 관련 타입들
+export interface LoginFormData {
+  email: string;
+  password: string;
+}
+
+export interface RegisterFormData {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  phone?: string;
+  vehicleType?: 'MOTORCYCLE' | 'BICYCLE' | 'CAR';
+  agreeToTerms: boolean;
+  agreeToPrivacy: boolean;
+}
+
+export interface ResetPasswordFormData {
+  email: string;
+}
+
+export interface FormErrors {
+  [key: string]: string;
+}
+
+export interface AuthApiResponse {
+  success: boolean;
+  message: string;
+  error?: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}

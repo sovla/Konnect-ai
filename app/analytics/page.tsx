@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import DashboardCard from '@/app/components/common/DashboardCard';
+import { DashboardLayout } from '@/app/components';
 import { LineChart, DonutChart, BarChart } from '@/app/components/charts';
 import { getAnalytics } from '@/app/apis';
 import { formatCurrency, deliveryCountFormatter } from '@/app/utils';
@@ -23,63 +24,67 @@ export default function AnalyticsPage() {
   });
 
   return (
-    <div className="p-6">
-      <div className="space-y-6">
-        {/* 헤더 */}
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">수익 분석</h1>
+    <DashboardLayout>
+      <div className="p-6">
+        <div className="space-y-6">
+          {/* 헤더 */}
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-900">수익 분석</h1>
 
-          {/* 기간 선택 버튼 */}
-          <div className="flex bg-gray-100 rounded-lg p-1">
-            <button
-              onClick={() => setSelectedPeriod('weekly')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                selectedPeriod === 'weekly' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              주간
-            </button>
-            <button
-              onClick={() => setSelectedPeriod('monthly')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                selectedPeriod === 'monthly' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              월간
-            </button>
+            {/* 기간 선택 버튼 */}
+            <div className="flex bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setSelectedPeriod('weekly')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  selectedPeriod === 'weekly' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                주간
+              </button>
+              <button
+                onClick={() => setSelectedPeriod('monthly')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  selectedPeriod === 'monthly'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                월간
+              </button>
+            </div>
           </div>
+
+          {/* 로딩 상태 */}
+          {isLoading && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[...Array(4)].map((_, i) => (
+                <DashboardCard key={i} title="로딩 중...">
+                  <div className="animate-pulse">
+                    <div className="h-8 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded"></div>
+                  </div>
+                </DashboardCard>
+              ))}
+            </div>
+          )}
+
+          {/* 에러 상태 */}
+          {error && (
+            <DashboardCard title="오류">
+              <p className="text-red-600">데이터를 불러오는 중 오류가 발생했습니다.</p>
+            </DashboardCard>
+          )}
+
+          {/* 데이터가 있을 때 */}
+          {analyticsData?.success && (
+            <>
+              {selectedPeriod === 'weekly' && <WeeklyAnalytics data={analyticsData.data as WeeklyStat[]} />}
+              {selectedPeriod === 'monthly' && <MonthlyAnalytics data={analyticsData.data as MonthlyAnalysis} />}
+            </>
+          )}
         </div>
-
-        {/* 로딩 상태 */}
-        {isLoading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
-              <DashboardCard key={i} title="로딩 중...">
-                <div className="animate-pulse">
-                  <div className="h-8 bg-gray-200 rounded mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded"></div>
-                </div>
-              </DashboardCard>
-            ))}
-          </div>
-        )}
-
-        {/* 에러 상태 */}
-        {error && (
-          <DashboardCard title="오류">
-            <p className="text-red-600">데이터를 불러오는 중 오류가 발생했습니다.</p>
-          </DashboardCard>
-        )}
-
-        {/* 데이터가 있을 때 */}
-        {analyticsData?.success && (
-          <>
-            {selectedPeriod === 'weekly' && <WeeklyAnalytics data={analyticsData.data as WeeklyStat[]} />}
-            {selectedPeriod === 'monthly' && <MonthlyAnalytics data={analyticsData.data as MonthlyAnalysis} />}
-          </>
-        )}
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
 

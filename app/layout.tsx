@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { QueryProvider } from './providers/QueryProvider';
 import { SessionProvider } from './providers/SessionProvider';
-import { DashboardLayout } from './components';
 import { auth } from '@/auth';
 
 const geistSans = Geist({
@@ -32,9 +31,7 @@ export default async function RootLayout({
     <html lang="ko">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <SessionProvider session={session}>
-          <QueryProvider>
-            <DashboardLayout>{children}</DashboardLayout>
-          </QueryProvider>
+          <QueryProvider>{children}</QueryProvider>
         </SessionProvider>
       </body>
     </html>

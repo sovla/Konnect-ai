@@ -10,11 +10,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '이메일과 비밀번호를 모두 입력해주세요.' }, { status: 400 });
     }
 
+    console.log(email, password);
     const result = await signIn('credentials', {
       email,
       password,
       redirect: false,
     });
+    console.log(result);
 
     if (result?.error) {
       return NextResponse.json({ error: '이메일 또는 비밀번호가 올바르지 않습니다.' }, { status: 401 });

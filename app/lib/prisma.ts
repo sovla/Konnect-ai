@@ -20,10 +20,12 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // 프로세스 종료 시 연결 해제
-process.on('beforeExit', async () => {
-  await prisma.$disconnect();
-});
-
+// 서버 환경에서만 동작
+if (process) {
+  process.on?.('beforeExit', async () => {
+    await prisma.$disconnect();
+  });
+}
 // 데이터베이스 연결 테스트 함수
 export async function testDatabaseConnection() {
   try {

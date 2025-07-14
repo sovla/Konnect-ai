@@ -27,3 +27,6 @@ export { default as HeatmapOverlay } from './map/HeatmapOverlay';
 // Chart Components
 export { LineChart, DonutChart, BarChart } from './charts';
 export type { LineChartProps, DonutChartProps, BarChartProps } from './charts';
+
+// Auth Components
+export { ProtectedRoute, RedirectIfAuthenticated } from './auth';
