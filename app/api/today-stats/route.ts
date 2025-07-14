@@ -18,7 +18,24 @@ export async function GET() {
     });
 
     if (!riderProfile) {
-      return NextResponse.json({ error: '라이더 프로필을 찾을 수 없습니다.' }, { status: 404 });
+      // 라이더 프로필이 없는 경우 기본값으로 빈 통계 반환
+      const todayStats = {
+        date: formatDate(getCurrentDate()),
+        totalEarnings: 0,
+        completedDeliveries: 0,
+        onlineTime: '00:00:00',
+        goalProgress: 0,
+        avgEarningsPerDelivery: 0,
+        acceptanceRate: 0,
+        currentStreak: 0,
+      };
+
+      const response = {
+        success: true,
+        data: todayStats,
+      };
+
+      return NextResponse.json(response);
     }
 
     // 오늘 날짜 범위 설정 (dateHelpers 활용)

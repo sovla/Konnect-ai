@@ -32,7 +32,81 @@ export async function GET(request: Request) {
     });
 
     if (!riderProfile) {
-      return NextResponse.json({ error: '라이더 프로필을 찾을 수 없습니다.' }, { status: 404 });
+      // 라이더 프로필이 없는 경우 빈 데이터 반환
+      switch (validatedParams.type) {
+        case 'weekly': {
+          // 지난 7일간 빈 데이터
+          const weeklyStats = [];
+          for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            weeklyStats.push({
+              date: formatDate(date),
+              earnings: 0,
+              deliveries: 0,
+            });
+          }
+
+          const response = {
+            success: true,
+            data: weeklyStats,
+          };
+          return NextResponse.json(response);
+        }
+
+        case 'monthly': {
+          // 현재 월과 지난 달 빈 데이터
+          const currentMonth = getThisMonthStart();
+          const lastMonth = new Date(currentMonth);
+          lastMonth.setMonth(lastMonth.getMonth() - 1);
+
+          const monthlyAnalysis = {
+            currentMonth: {
+              month: formatDate(currentMonth, 'yyyy-MM'),
+              totalEarnings: 0,
+              totalDeliveries: 0,
+              workingDays: 0,
+              avgDailyEarnings: 0,
+              goalProgress: 0,
+              earningsBreakdown: {
+                base: 0,
+                promo: 0,
+                tip: 0,
+              },
+            },
+            lastMonth: {
+              month: formatDate(lastMonth, 'yyyy-MM'),
+              totalEarnings: 0,
+              totalDeliveries: 0,
+              workingDays: 0,
+              avgDailyEarnings: 0,
+            },
+            dayOfWeekStats: ['일', '월', '화', '수', '목', '금', '토'].map((day) => ({
+              day,
+              avgEarnings: 0,
+              avgDeliveries: 0,
+            })),
+          };
+
+          const response = {
+            success: true,
+            data: monthlyAnalysis,
+          };
+          return NextResponse.json(response);
+        }
+
+        default: {
+          // 주간과 월간 모두 빈 데이터
+          const response = {
+            success: true,
+            data: {
+              weekly: [],
+              monthly: null,
+            },
+          };
+          return NextResponse.json(response);
+        }
+      }
     }
 
     switch (validatedParams.type) {

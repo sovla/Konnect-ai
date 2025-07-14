@@ -7,10 +7,10 @@ import {
   AnalyticsType,
   Announcement,
   ApiResponse,
-  Delivery,
   RiderProfile,
   TodayStats,
 } from '@/app/types';
+import { DeliveriesResponse } from '@/app/types/dto';
 import { API_BASE_URL } from '../constants';
 
 // 기본 fetch 래퍼 함수
@@ -38,13 +38,15 @@ export const apiClient = {
   },
 };
 
-// 배달 내역 조회
-export const getDeliveries = async (params?: { date?: string; limit?: number }) => {
+// 배달 내역 조회 (검색, 페이지네이션 지원)
+export const getDeliveries = async (params?: { date?: string; limit?: number; page?: number; search?: string }) => {
   const searchParams = new URLSearchParams();
   if (params?.date) searchParams.append('date', params.date);
   if (params?.limit) searchParams.append('limit', params.limit.toString());
+  if (params?.page) searchParams.append('page', params.page.toString());
+  if (params?.search) searchParams.append('search', params.search);
 
-  return apiClient.get<ApiResponse<Delivery[]>>(`/deliveries?${searchParams.toString()}`);
+  return apiClient.get<DeliveriesResponse>(`/deliveries?${searchParams.toString()}`);
 };
 
 // 라이더 프로필 조회

@@ -21,18 +21,33 @@ export const DeliverySchema = z.object({
   deliveryTime: z.number().min(0), // 분 단위
 });
 
-// 배달 조회 요청 (null 값을 허용하도록 수정)
+// 배달 통계 스키마
+export const DeliveryStatsSchema = z.object({
+  totalEarnings: z.number(),
+  totalBaseEarnings: z.number(),
+  totalPromoEarnings: z.number(),
+  totalTipEarnings: z.number(),
+  totalDeliveries: z.number(),
+  avgEarningsPerDelivery: z.number(),
+  avgRating: z.number(),
+  avgDeliveryTime: z.number(),
+  totalDeliveryTime: z.number(),
+});
+
+// 배달 조회 요청 (검색 기능 추가)
 export const GetDeliveriesRequestSchema = z.object({
   date: z.string().nullable().optional(),
   limit: z.number().min(1).max(100).nullable().optional(),
   page: z.number().min(1).nullable().optional(),
+  search: z.string().nullable().optional(), // 주소 검색용
 });
 
-// 배달 조회 응답
+// 배달 조회 응답 (통계 정보 추가)
 export const DeliveriesResponseSchema = BaseResponseSchema.extend({
   data: z.array(DeliverySchema),
   total: z.number().optional(),
-  pagination: PaginationSchema.omit({ page: true, limit: true }).optional(),
+  pagination: PaginationSchema.optional(),
+  stats: DeliveryStatsSchema.optional(), // 통계 정보 추가
 });
 
 // 오늘 통계
@@ -77,6 +92,7 @@ export const CreateDeliveryResponseSchema = BaseResponseSchema.extend({
 // 타입 내보내기
 export type Earnings = z.infer<typeof EarningsSchema>;
 export type Delivery = z.infer<typeof DeliverySchema>;
+export type DeliveryStats = z.infer<typeof DeliveryStatsSchema>;
 export type GetDeliveriesRequest = z.infer<typeof GetDeliveriesRequestSchema>;
 export type DeliveriesResponse = z.infer<typeof DeliveriesResponseSchema>;
 export type TodayStats = z.infer<typeof TodayStatsSchema>;

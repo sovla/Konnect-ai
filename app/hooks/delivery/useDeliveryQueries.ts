@@ -7,8 +7,8 @@ export const DELIVERY_QUERY_KEYS = {
   DELIVERIES: 'deliveries',
 } as const;
 
-// 배달 내역 조회
-export const useDeliveries = (params?: { date?: string; limit?: number }) => {
+// 배달 내역 조회 (검색, 페이지네이션 지원)
+export const useDeliveries = (params?: { date?: string; limit?: number; page?: number; search?: string }) => {
   return useQuery({
     queryKey: [DELIVERY_QUERY_KEYS.DELIVERIES, params],
     queryFn: () => getDeliveries(params),
