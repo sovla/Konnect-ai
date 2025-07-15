@@ -67,7 +67,9 @@ export async function GET(request: Request) {
       }
 
       case 'hourly': {
-        // DB에서 시간대별 예측 데이터 조회 (오늘 날짜 기준, dateHelpers 활용)
+        // 일주일간 시간대별 예측 데이터 조회
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         const today = getCurrentDate();
         const startOfDay = new Date(today);
         startOfDay.setHours(0, 0, 0, 0);
@@ -113,28 +115,33 @@ export async function GET(request: Request) {
             hourData.busyAreas.push(prediction.zone.name);
           }
         });
+        // 현재 시간보다 이전 시간대 데이터는 지우기
 
+        const currentHour = new Date().getHours();
         // 평균 계산 및 추천 메시지 생성
-        const hourlyPredictions = Array.from(hourlyMap.values()).map((data) => ({
-          hour: data.hour,
-          expectedOrders: data.expectedOrders,
-          avgEarnings: Math.round(data.avgEarnings),
-          busyAreas: [...new Set(data.busyAreas)], // 중복 제거
-          confidence: Math.round((data.confidence / data.count) * 100),
-          recommendation:
-            data.expectedOrders >= 10
-              ? '가장 바쁜 시간대'
-              : data.expectedOrders >= 6
-              ? `${data.busyAreas[0] || '추천 지역'}으로 이동하세요`
-              : data.expectedOrders >= 4
-              ? '적당한 주문량 예상'
-              : '잠시 휴식하세요',
-        }));
+        const hourlyPredictions = Array.from(hourlyMap.values())
+          .filter((data) => data.hour <= currentHour)
+          .map((data) => ({
+            hour: data.hour,
+            expectedOrders: data.expectedOrders,
+            avgEarnings: Math.round(data.avgEarnings),
+            busyAreas: [...new Set(data.busyAreas)], // 중복 제거
+            confidence: Math.round((data.confidence / data.count) * 100),
+            recommendation:
+              data.expectedOrders >= 10
+                ? '가장 바쁜 시간대'
+                : data.expectedOrders >= 6
+                ? `${data.busyAreas[0] || '추천 지역'}으로 이동하세요`
+                : data.expectedOrders >= 4
+                ? '적당한 주문량 예상'
+                : '잠시 휴식하세요',
+          }));
 
         const response = {
           success: true,
           data: hourlyPredictions,
         };
+        console.log(response);
         const validatedResponse = HourlyPredictionsResponseSchema.parse(response);
         return NextResponse.json(validatedResponse);
       }

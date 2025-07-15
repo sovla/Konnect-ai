@@ -25,7 +25,6 @@ export * from './utils';
 
 // 배치 관리 (신규 추가)
 export * from './batch/useBatchQueries';
-export { BATCH_QUERY_KEYS } from './batch/useBatchQueries';
 
 // === 기존 유틸리티 hooks ===
 
