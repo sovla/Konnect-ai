@@ -7,10 +7,9 @@ import {
   AnalyticsType,
   Announcement,
   ApiResponse,
-  RiderProfile,
   TodayStats,
 } from '@/app/types';
-import { DeliveriesResponse } from '@/app/types/dto';
+import { DeliveriesResponse, RiderSettingsResponse } from '@/app/types/dto';
 import { API_BASE_URL } from '../constants';
 
 // 기본 fetch 래퍼 함수
@@ -51,7 +50,7 @@ export const getDeliveries = async (params?: { date?: string; limit?: number; pa
 
 // 라이더 프로필 조회
 export const getRiderProfile = async () => {
-  return apiClient.get<ApiResponse<RiderProfile>>('/rider-profile');
+  return apiClient.get<RiderSettingsResponse>('/rider-profile');
 };
 
 // 오늘의 통계 조회

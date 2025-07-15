@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/app/lib/prisma';
-import { RiderProfileResponseSchema } from '@/app/types/dto';
+import { RiderSettingsResponseSchema } from '@/app/types/dto/settings.dto';
 
 export async function GET() {
   try {
@@ -27,64 +27,49 @@ export async function GET() {
       return NextResponse.json({ error: '라이더 프로필을 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    // 온라인 시간을 HH:MM 형식으로 변환
-    const onlineMinutes = riderProfile.onlineTime;
-    const onlineHours = Math.floor(onlineMinutes / 60);
-    const onlineMinutesRemainder = onlineMinutes % 60;
-    const onlineTimeFormatted = `${onlineHours.toString().padStart(2, '0')}:${onlineMinutesRemainder
-      .toString()
-      .padStart(2, '0')}`;
+    // workingHours JSON 파싱
+    const workingHours =
+      typeof riderProfile.workingHours === 'string' ? JSON.parse(riderProfile.workingHours) : riderProfile.workingHours;
 
-    // Mock API 형식에 맞게 데이터 변환
+    // settings.dto.ts의 RiderProfileResponseSchema에 맞게 데이터 변환
     const riderData = {
       id: riderProfile.id,
-      name: riderProfile.user.name,
       dailyGoal: riderProfile.dailyGoal,
       monthlyGoal: riderProfile.monthlyGoal,
-      joinDate: riderProfile.joinDate.toISOString().split('T')[0], // YYYY-MM-DD 형식
+      preferredAreas: riderProfile.preferredAreas,
+      vehicleType: riderProfile.vehicleType, // enum 그대로 사용
+      minOrderAmount: riderProfile.minOrderAmount,
+      workingHours: workingHours,
+      maxDistance: riderProfile.maxDistance,
+      autoAccept: riderProfile.autoAccept,
+      pushNewOrder: riderProfile.pushNewOrder,
+      pushGoalAchieve: riderProfile.pushGoalAchieve,
+      pushPromotion: riderProfile.pushPromotion,
+      emailSummary: riderProfile.emailSummary,
+      emailMarketing: riderProfile.emailMarketing,
+    };
+
+    // 라이더 통계 데이터 (추가 정보)
+    const riderStats = {
       totalDeliveries: riderProfile.totalDeliveries,
+      totalEarnings: 0, // 실제로는 배달 데이터에서 계산해야 함
       averageRating: riderProfile.averageRating,
       acceptanceRate: riderProfile.acceptanceRate,
       avgDeliveryTime: riderProfile.avgDeliveryTime,
-      preferredAreas: riderProfile.preferredAreas,
-      vehicleType: riderProfile.vehicleType.toLowerCase(),
+      onlineTime: riderProfile.onlineTime,
       isOnline: riderProfile.isOnline,
-      onlineTime: onlineTimeFormatted,
-    };
-
-    // 플랫폼 평균 데이터 조회 (최신 데이터)
-    const platformStats = await prisma.platformStats.findFirst({
-      orderBy: { date: 'desc' },
-      select: {
-        avgAcceptanceRate: true,
-        avgDeliveryTime: true,
-        avgDailyEarnings: true,
-        avgMonthlyEarnings: true,
-        avgRating: true,
-        avgDeliveriesPerDay: true,
-      },
-    });
-
-    // 플랫폼 평균 데이터가 없으면 기본값 사용
-    const platformAverages = {
-      acceptanceRate: platformStats?.avgAcceptanceRate || 92,
-      avgDeliveryTime: platformStats?.avgDeliveryTime || 21,
-      avgDailyEarnings: platformStats?.avgDailyEarnings || 120000,
-      avgMonthlyEarnings: platformStats?.avgMonthlyEarnings || 3200000,
-      avgRating: platformStats?.avgRating || 4.6,
-      avgDeliveriesPerDay: platformStats?.avgDeliveriesPerDay || 28,
     };
 
     const response = {
       success: true,
       data: {
-        rider: riderData,
-        platformAverages: platformAverages,
+        riderProfile: riderData,
+        riderStats: riderStats,
       },
     };
 
-    // dto 스키마로 응답 검증
-    const validatedResponse = RiderProfileResponseSchema.parse(response);
+    // settings.dto.ts의 RiderSettingsResponseSchema로 검증
+    const validatedResponse = RiderSettingsResponseSchema.parse(response);
 
     return NextResponse.json(validatedResponse);
   } catch (error) {

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@tremor/react';
 import { useDeliveryGenerate, deliveryGenerateHelpers } from '@/app/hooks/delivery';
 import { RiAddLine, RiCalendarLine, RiUserLine } from '@remixicon/react';
+import { useRiderProfile } from '@/app/hooks';
 
 export default function DeliveryDataGenerator() {
   const [selectedRider, setSelectedRider] = useState<string>('');
@@ -14,6 +15,8 @@ export default function DeliveryDataGenerator() {
   const [useCustomDate, setUseCustomDate] = useState(false);
 
   const generateMutation = useDeliveryGenerate();
+
+  const { data: riderData } = useRiderProfile();
 
   const handleQuickGenerate = (type: 'today' | 'week' | 'month') => {
     let request;
@@ -36,16 +39,26 @@ export default function DeliveryDataGenerator() {
   const handleCustomGenerate = () => {
     let request;
 
+    const riderId = riderData?.data?.riderProfile.id;
+    if (!riderId) {
+      // 라이더 데이터가 없으면 메시지 표시
+      return;
+    }
+
     if (useCustomDate && customStartDate && customEndDate) {
       request = deliveryGenerateHelpers.generateForDateRange(
         customStartDate,
         customEndDate,
         count,
-        selectedRider || undefined,
+        selectedRider === 'current' ? riderId : selectedRider,
       );
     } else {
       request = selectedRider
-        ? deliveryGenerateHelpers.generateForRider(selectedRider, count, dateRange)
+        ? deliveryGenerateHelpers.generateForRider(
+            selectedRider === 'current' ? riderId : selectedRider,
+            count,
+            dateRange,
+          )
         : deliveryGenerateHelpers.generateForAllRiders(count, dateRange);
     }
 
