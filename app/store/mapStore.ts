@@ -3,7 +3,7 @@ import { devtools } from 'zustand/middleware';
 import { AIPrediction, HeatmapData, AIPolygon } from '../types';
 
 interface MapState {
-  // 지도 중심 좌표 (부산 해운대 기준)
+  // 지도 중심 좌표 (부산 중심가 기준)
   center: {
     lat: number;
     lng: number;

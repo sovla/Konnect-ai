@@ -7,12 +7,28 @@ async function calculateAndUpdateAIZones(targetDate: Date) {
   const thirtyDaysAgo = new Date(targetDate);
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  // 지난 30일간의 배달 데이터 조회
+  // 부산 지역 경계 (대략적인 범위)
+  const BUSAN_BOUNDS = {
+    latMin: 35.0,
+    latMax: 35.4,
+    lngMin: 128.9,
+    lngMax: 129.3,
+  };
+
+  // 지난 30일간의 배달 데이터 조회 (부산 지역 한정)
   const deliveries = await prisma.delivery.findMany({
     where: {
       date: {
         gte: thirtyDaysAgo,
         lte: targetDate,
+      },
+      pickupLat: {
+        gte: BUSAN_BOUNDS.latMin,
+        lte: BUSAN_BOUNDS.latMax,
+      },
+      pickupLng: {
+        gte: BUSAN_BOUNDS.lngMin,
+        lte: BUSAN_BOUNDS.lngMax,
       },
     },
     select: {
@@ -134,6 +150,14 @@ async function calculateAndStoreHourlyPredictions(targetDate: Date) {
   const thirtyDaysAgo = new Date(targetDate);
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+  // 부산 지역 경계 (대략적인 범위)
+  const BUSAN_BOUNDS = {
+    latMin: 35.0,
+    latMax: 35.4,
+    lngMin: 128.9,
+    lngMax: 129.3,
+  };
+
   // 활성 AI 존들 조회
   const aiZones = await prisma.aIZone.findMany({
     where: { isActive: true },
@@ -143,12 +167,20 @@ async function calculateAndStoreHourlyPredictions(targetDate: Date) {
     return 0;
   }
 
-  // 지난 30일간의 배달 데이터를 시간대별로 분석
+  // 지난 30일간의 배달 데이터를 시간대별로 분석 (부산 지역 한정)
   const deliveries = await prisma.delivery.findMany({
     where: {
       date: {
         gte: thirtyDaysAgo,
         lte: targetDate,
+      },
+      pickupLat: {
+        gte: BUSAN_BOUNDS.latMin,
+        lte: BUSAN_BOUNDS.latMax,
+      },
+      pickupLng: {
+        gte: BUSAN_BOUNDS.lngMin,
+        lte: BUSAN_BOUNDS.lngMax,
       },
     },
     select: {
@@ -230,12 +262,28 @@ async function calculateAndUpdateHeatmapData(targetDate: Date) {
   const sevenDaysAgo = new Date(targetDate);
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-  // 최근 7일간의 배달 데이터 조회
+  // 부산 지역 경계 (대략적인 범위)
+  const BUSAN_BOUNDS = {
+    latMin: 35.0,
+    latMax: 35.4,
+    lngMin: 128.9,
+    lngMax: 129.3,
+  };
+
+  // 최근 7일간의 배달 데이터 조회 (부산 지역 한정)
   const deliveries = await prisma.delivery.findMany({
     where: {
       date: {
         gte: sevenDaysAgo,
         lte: targetDate,
+      },
+      pickupLat: {
+        gte: BUSAN_BOUNDS.latMin,
+        lte: BUSAN_BOUNDS.latMax,
+      },
+      pickupLng: {
+        gte: BUSAN_BOUNDS.lngMin,
+        lte: BUSAN_BOUNDS.lngMax,
       },
     },
     select: {

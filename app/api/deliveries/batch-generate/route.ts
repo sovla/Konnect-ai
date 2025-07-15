@@ -13,40 +13,6 @@ const BatchGenerateRequestSchema = z.object({
   dateRange: z.enum(['today', 'week', 'month']).optional(), // 날짜 범위
 });
 
-// 서울 지역 기반 주소 데이터
-const SEOUL_ADDRESSES = [
-  { address: '서울특별시 강남구 역삼동', lat: 37.5009, lng: 127.0368 },
-  { address: '서울특별시 강남구 삼성동', lat: 37.514, lng: 127.0565 },
-  { address: '서울특별시 강남구 청담동', lat: 37.5228, lng: 127.058 },
-  { address: '서울특별시 서초구 서초동', lat: 37.4837, lng: 127.0324 },
-  { address: '서울특별시 서초구 반포동', lat: 37.5048, lng: 127.0107 },
-  { address: '서울특별시 마포구 홍대입구', lat: 37.5565, lng: 126.924 },
-  { address: '서울특별시 마포구 합정동', lat: 37.5499, lng: 126.9135 },
-  { address: '서울특별시 종로구 명동', lat: 37.5636, lng: 126.9827 },
-  { address: '서울특별시 중구 을지로', lat: 37.5663, lng: 126.991 },
-  { address: '서울특별시 용산구 한남동', lat: 37.5346, lng: 127.0023 },
-  { address: '서울특별시 송파구 잠실동', lat: 37.5133, lng: 127.1028 },
-  { address: '서울특별시 강동구 천호동', lat: 37.5407, lng: 127.124 },
-  { address: '서울특별시 영등포구 여의도동', lat: 37.5219, lng: 126.9245 },
-  { address: '서울특별시 구로구 구로동', lat: 37.4954, lng: 126.8872 },
-  { address: '서울특별시 관악구 신림동', lat: 37.4841, lng: 126.9299 },
-  { address: '서울특별시 동작구 사당동', lat: 37.4769, lng: 126.9813 },
-  { address: '서울특별시 성동구 성수동', lat: 37.5446, lng: 127.0557 },
-  { address: '서울특별시 광진구 건대입구', lat: 37.5401, lng: 127.0698 },
-  { address: '서울특별시 성북구 정릉동', lat: 37.6066, lng: 127.011 },
-  { address: '서울특별시 강북구 미아동', lat: 37.6027, lng: 127.0255 },
-  { address: '서울특별시 도봉구 창동', lat: 37.6533, lng: 127.047 },
-  { address: '서울특별시 노원구 상계동', lat: 37.6543, lng: 127.0658 },
-  { address: '서울특별시 중랑구 면목동', lat: 37.5804, lng: 127.089 },
-  { address: '서울특별시 동대문구 휘경동', lat: 37.5912, lng: 127.0463 },
-  { address: '서울특별시 서대문구 홍제동', lat: 37.5859, lng: 126.9438 },
-  { address: '서울특별시 은평구 응암동', lat: 37.6026, lng: 126.9154 },
-  { address: '서울특별시 금천구 가산동', lat: 37.4814, lng: 126.8816 },
-  { address: '서울특별시 양천구 목동', lat: 37.5267, lng: 126.8745 },
-  { address: '서울특별시 강서구 화곡동', lat: 37.5415, lng: 126.8402 },
-  { address: '서울특별시 구로구 신도림동', lat: 37.5084, lng: 126.891 },
-];
-
 // 부산 지역 기반 주소 데이터
 const BUSAN_ADDRESSES = [
   // 해운대구
@@ -145,8 +111,8 @@ const BUSAN_ADDRESSES = [
   { address: '부산광역시 동구 좌천동', lat: 35.1314, lng: 129.0454 },
 ];
 
-// 전체 주소 배열 (서울 + 부산)
-const ALL_ADDRESSES = [...SEOUL_ADDRESSES, ...BUSAN_ADDRESSES];
+// 부산 지역 주소만 사용 (부산 한정 서비스)
+const ALL_ADDRESSES = BUSAN_ADDRESSES;
 
 // 랜덤 선택 함수
 const randomChoice = <T>(array: T[]): T => {

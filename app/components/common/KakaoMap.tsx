@@ -25,7 +25,7 @@ export default function KakaoMap({
   showCurrentLocation = true,
 }: KakaoMapProps) {
   // Zustand 상태
-  const { center, zoom, setZoom } = useMapStore();
+  const { center, zoom } = useMapStore();
   const { mapFilters } = useUIStore();
 
   // 지도 인터랙션 훅 (미니맵 모드에서는 사용하지 않음)
@@ -53,10 +53,13 @@ export default function KakaoMap({
     if (miniMode) {
       // 미니맵 모드에서는 현재 시간의 상위 3개 핫스팟만 표시
       const currentHour = new Date().getHours();
-      const currentPrediction = predictionsData.find((prediction) => prediction.time === `${currentHour}:00`);
+      const currentTimeSlot = `${currentHour}:00`;
+      const currentPrediction = predictionsData.find((prediction) => prediction.time === currentTimeSlot);
       // 줌 레벨 조절
-      setZoom(9);
-      return currentPrediction?.polygons.slice(0, 3) || [];
+      // 현재 시간대의 데이터가 없으면 첫 번째 시간대의 데이터를 사용
+      const fallbackPrediction = predictionsData.length > 0 ? predictionsData[0] : null;
+      const prediction = currentPrediction || fallbackPrediction;
+      return prediction?.polygons.slice(0, 3) || [];
     }
     return (
       predictionsData.find((prediction) => prediction.time === `${mapFilters.selectedTimeSlot}:00`)?.polygons || []

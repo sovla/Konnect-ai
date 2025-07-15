@@ -125,8 +125,11 @@ export interface HeatmapMarkerInfo {
 
 export interface HourlyPrediction {
   hour: number;
-  expectedCalls: number;
+  expectedOrders: number;
+  avgEarnings: number;
+  busyAreas: string[];
   confidence: number;
+  recommendation: string;
 }
 
 // 공지사항 타입

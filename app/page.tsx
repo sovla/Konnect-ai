@@ -138,11 +138,11 @@ export default function Dashboard() {
 
                   <div className="space-y-3">
                     {data.data.slice(0, 3).map((prediction) => {
-                      const level =
-                        prediction.expectedCalls > 10 ? 'high' : prediction.expectedCalls > 6 ? 'medium' : 'low';
+                      const expectedCalls = prediction.expectedOrders || 0;
+                      const level = expectedCalls > 10 ? 'high' : expectedCalls > 6 ? 'medium' : 'low';
                       const levelText = level === 'high' ? '많음' : level === 'medium' ? '보통' : '적음';
                       const levelColor = level === 'high' ? 'green' : level === 'medium' ? 'yellow' : 'red';
-                      const progressWidth = Math.min((prediction.expectedCalls / 15) * 100, 100);
+                      const progressWidth = Math.min((expectedCalls / 15) * 100, 100);
 
                       return (
                         <div key={prediction.hour} className="flex items-center justify-between">
@@ -157,7 +157,7 @@ export default function Dashboard() {
                               ></div>
                             </div>
                             <span className={`text-sm font-medium text-${levelColor}-600`}>{levelText}</span>
-                            <span className="text-xs text-gray-500 ml-1">({prediction.expectedCalls}건)</span>
+                            <span className="text-xs text-gray-500 ml-1">({expectedCalls}건)</span>
                           </div>
                         </div>
                       );
