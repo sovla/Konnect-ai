@@ -361,7 +361,7 @@ async function main() {
         update: {},
         create: {
           zoneId: zone.id,
-          predictionDate: new Date('2025-07-14'), // 고정 날짜 (개발용)
+          predictionDate: new Date('2025-07-14T14:00:00'), // 고정 날짜 (개발용)
           hour: hour,
           expectedCalls: zone.expectedCalls + Math.floor(Math.random() * 5) - 2, // 약간의 변동
           confidence: zone.confidence + (Math.random() * 0.1 - 0.05), // 약간의 변동
