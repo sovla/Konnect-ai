@@ -23,6 +23,10 @@ export * from './settings';
 // 유틸리티 관련 훅들 (Query 관련)
 export * from './utils';
 
+// 배치 관리 (신규 추가)
+export * from './batch/useBatchQueries';
+export { BATCH_QUERY_KEYS } from './batch/useBatchQueries';
+
 // === 기존 유틸리티 hooks ===
 
 // 유틸리티 훅들

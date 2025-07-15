@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/ai-predictions/batch-calculate",
+      "schedule": "0 2 * * *"
+    }
+  ]
+}
