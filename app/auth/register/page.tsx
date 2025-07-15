@@ -33,8 +33,8 @@ export default function RegisterPage() {
       confirmPassword: '',
       phone: '',
       vehicleType: 'MOTORCYCLE',
-      agreeToTerms: false,
-      agreeToPrivacy: false,
+      agreeToTerms: true,
+      agreeToPrivacy: true,
     },
   });
 
@@ -290,7 +290,7 @@ export default function RegisterPage() {
               </div>
 
               {/* 약관 동의 */}
-              <div className="space-y-4">
+              {/* <div className="space-y-4">
                 <div className="flex items-start">
                   <input
                     {...register('agreeToTerms')}
@@ -326,7 +326,7 @@ export default function RegisterPage() {
                   </label>
                 </div>
                 {errors.agreeToPrivacy && <p className="text-sm text-red-600">{errors.agreeToPrivacy.message}</p>}
-              </div>
+              </div> */}
 
               {/* 회원가입 버튼 */}
               <div>
@@ -359,7 +359,7 @@ export default function RegisterPage() {
           </div>
 
           {/* 추가 정보 */}
-          <div className="mt-6 text-center">
+          {/* <div className="mt-6 text-center">
             <p className="text-xs text-gray-500">
               회원가입을 진행하시면{' '}
               <Link href="/terms" className="text-blue-600 hover:text-blue-500">
@@ -371,7 +371,7 @@ export default function RegisterPage() {
               </Link>
               에 동의하는 것으로 간주됩니다.
             </p>
-          </div>
+          </div> */}
         </div>
       </div>
     </RedirectIfAuthenticated>

@@ -118,7 +118,6 @@ export default function LoginPage() {
                 </div>
                 {errors.email && <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>}
               </div>
-
               {/* 비밀번호 입력 */}
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700">
@@ -150,8 +149,7 @@ export default function LoginPage() {
                 </div>
                 {errors.password && <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>}
               </div>
-
-              {/* 비밀번호 찾기 링크 */}
+              {/* 비밀번호 찾기 링크
               <div className="flex items-center justify-end">
                 <div className="text-sm">
                   <Link
@@ -161,8 +159,7 @@ export default function LoginPage() {
                     비밀번호를 잊으셨나요?
                   </Link>
                 </div>
-              </div>
-
+              </div> */}
               {/* 로그인 버튼 */}
               <div>
                 <button
@@ -180,7 +177,6 @@ export default function LoginPage() {
                   {isSubmitting ? '로그인 중...' : '로그인'}
                 </button>
               </div>
-
               {/* 회원가입 링크 */}
               <div className="text-center">
                 <p className="text-sm text-gray-600">
