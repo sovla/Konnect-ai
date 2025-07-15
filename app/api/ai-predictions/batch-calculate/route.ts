@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 import { RecommendationType, Impact } from '@/app/generated/prisma';
+import { convertCoordinatesToAddress, analyzeAreaCharacteristics } from '@/app/utils/geminiUtils';
 
 // 배달 기록을 기반으로 AI 존 데이터 계산 및 업데이트
 async function calculateAndUpdateAIZones(targetDate: Date) {
@@ -106,6 +107,15 @@ async function calculateAndUpdateAIZones(targetDate: Date) {
       [stats.lat - radius, stats.lng - radius], // 폴리곤 닫기
     ];
 
+    // Gemini를 활용한 지역명 변환
+    let zoneName = `고수익 지역 ${stats.lat.toFixed(3)},${stats.lng.toFixed(3)}`;
+    try {
+      const addressName = await convertCoordinatesToAddress(stats.lat, stats.lng);
+      zoneName = `${addressName} 고수익 지역`;
+    } catch (error) {
+      console.warn('주소 변환 실패, 기본 이름 사용:', error);
+    }
+
     // 기존 AI 존 업데이트 또는 새로 생성
     const existingZone = await prisma.aIZone.findFirst({
       where: {
@@ -119,6 +129,7 @@ async function calculateAndUpdateAIZones(targetDate: Date) {
       await prisma.aIZone.update({
         where: { id: existingZone.id },
         data: {
+          name: zoneName, // 업데이트된 지역명 사용
           expectedCalls: Math.round(stats.orderCount / 30), // 일일 평균
           avgFee: Math.round(avgEarnings),
           confidence,
@@ -129,7 +140,7 @@ async function calculateAndUpdateAIZones(targetDate: Date) {
     } else {
       await prisma.aIZone.create({
         data: {
-          name: `고수익 지역 ${stats.lat.toFixed(3)},${stats.lng.toFixed(3)}`,
+          name: zoneName, // Gemini로 변환된 지역명 사용
           coordinates: coordinates,
           expectedCalls: Math.round(stats.orderCount / 30),
           avgFee: Math.round(avgEarnings),
@@ -260,7 +271,7 @@ async function calculateAndStoreHourlyPredictions(targetDate: Date) {
 // 히트맵 데이터 계산 및 업데이트
 async function calculateAndUpdateHeatmapData(targetDate: Date) {
   const sevenDaysAgo = new Date(targetDate);
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 30);
 
   // 부산 지역 경계 (대략적인 범위)
   const BUSAN_BOUNDS = {
@@ -421,11 +432,33 @@ async function generateAndStoreAIRecommendations(targetDate: Date) {
 
     if (hourlyPrediction && hourlyPrediction.expectedCalls > 3) {
       const expectedCalls = hourlyPrediction.expectedCalls;
+
+      // Gemini를 활용한 지역 특성 분석
+      let description = `현재 시간대에 평균 ${expectedCalls}건의 주문이 예상됩니다. 건당 평균 ${zone.avgFee.toLocaleString()}원`;
+      try {
+        const zoneCoords = zone.coordinates as number[][];
+        const zoneCenterLat = zoneCoords.reduce((sum, coord) => sum + coord[0], 0) / zoneCoords.length;
+        const zoneCenterLng = zoneCoords.reduce((sum, coord) => sum + coord[1], 0) / zoneCoords.length;
+
+        const analysis = await analyzeAreaCharacteristics(zoneCenterLat, zoneCenterLng, {
+          avgEarnings: zone.avgFee,
+          avgDeliveryTime: 20, // 기본값
+          orderCount: expectedCalls,
+          timePattern: `${currentHour}시 활성화`,
+        });
+
+        if (analysis && analysis.length > 0) {
+          description = `${description}\n\n${analysis}`;
+        }
+      } catch (error) {
+        console.warn('지역 분석 실패:', error);
+      }
+
       recommendations.push({
         zoneId: zone.id,
         type: RecommendationType.HISTORICAL_DATA,
         title: `${zone.name} 지역 추천`,
-        description: `현재 시간대에 평균 ${expectedCalls}건의 주문이 예상됩니다. 건당 평균 ${zone.avgFee.toLocaleString()}원`,
+        description,
         impact: expectedCalls > 8 ? Impact.HIGH : expectedCalls > 5 ? Impact.MEDIUM : Impact.LOW,
         confidence: hourlyPrediction.confidence,
       });
@@ -503,7 +536,7 @@ export async function POST(request: Request) {
     endDate.setHours(0, 0, 0, 0);
 
     const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 30);
+    startDate.setDate(startDate.getDate() - 7);
     startDate.setHours(0, 0, 0, 0);
 
     const results = [];
