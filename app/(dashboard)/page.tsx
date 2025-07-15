@@ -9,8 +9,9 @@ import {
   AnnouncementSkeleton,
 } from '../components';
 import { TrendingUp, MapPin, Clock, Bell } from 'lucide-react';
-import { useTodayStats, useAIPredictions, useAnnouncements } from '../hooks/useQueries';
+
 import { formatCurrency } from '../utils/dateHelpers';
+import { useTodayStats, useAIPredictions, useAnnouncements } from '@/app/hooks';
 
 export default function Dashboard() {
   // API 데이터 훅들
