@@ -89,6 +89,28 @@ export const CreateDeliveryResponseSchema = BaseResponseSchema.extend({
     .optional(),
 });
 
+// 배달 데이터 자동 생성 (테스트용)
+export const BatchGenerateDeliveryRequestSchema = z.object({
+  riderId: z.string().optional(),
+  count: z.number().min(1).max(100).optional().default(10),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  dateRange: z.enum(['today', 'week', 'month']).optional(),
+});
+
+export const BatchGenerateDeliveryResponseSchema = BaseResponseSchema.extend({
+  data: z
+    .object({
+      totalCreated: z.number(),
+      targetRiders: z.number(),
+      dateRange: z.object({
+        start: z.string(),
+        end: z.string(),
+      }),
+    })
+    .optional(),
+});
+
 // 타입 내보내기
 export type Earnings = z.infer<typeof EarningsSchema>;
 export type Delivery = z.infer<typeof DeliverySchema>;
@@ -99,3 +121,5 @@ export type TodayStats = z.infer<typeof TodayStatsSchema>;
 export type TodayStatsResponse = z.infer<typeof TodayStatsResponseSchema>;
 export type CreateDeliveryRequest = z.infer<typeof CreateDeliveryRequestSchema>;
 export type CreateDeliveryResponse = z.infer<typeof CreateDeliveryResponseSchema>;
+export type BatchGenerateDeliveryRequest = z.infer<typeof BatchGenerateDeliveryRequestSchema>;
+export type BatchGenerateDeliveryResponse = z.infer<typeof BatchGenerateDeliveryResponseSchema>;

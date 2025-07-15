@@ -4,14 +4,17 @@ import { useState } from 'react';
 import DashboardCard from '@/app/components/common/DashboardCard';
 import DeliveryTable from '@/app/components/common/DeliveryTable';
 import { useDeliveries } from '@/app/hooks';
-import { formatCurrency } from '@/app/utils';
+import { formatCurrency, getCurrentDate } from '@/app/utils';
 import { CalendarDays, Package, Clock, TrendingUp } from 'lucide-react';
 
 export default function HistoryPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<'all' | 'week' | 'month'>('all');
 
   // 배달 내역 데이터 조회
-  const { data: deliveriesData, isLoading: isDeliveriesLoading } = useDeliveries({});
+  const { data: deliveriesData, isLoading: isDeliveriesLoading } = useDeliveries({
+    date: getCurrentDate().toISOString(),
+    limit: 100,
+  });
 
   const deliveries = deliveriesData?.success ? deliveriesData.data : [];
 

@@ -71,6 +71,7 @@ export async function POST(request: Request) {
   try {
     const { type, immediate } = await request.json();
 
+    console.log(type, immediate);
     if (type === 'ai-recommendation') {
       if (immediate) {
         // 즉시 실행
@@ -133,9 +134,7 @@ export async function GET(request: Request) {
 // 자동 실행을 위한 health check (운영 환경에서 cron job이 호출)
 export async function HEAD() {
   try {
-    executeAIRecommendationBatch().catch((error) => {
-      console.error('자동 배치 실행 중 오류:', error);
-    });
+    await executeAIRecommendationBatch();
 
     return new Response(null, { status: 200 });
   } catch (error) {
