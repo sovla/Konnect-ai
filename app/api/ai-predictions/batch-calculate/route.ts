@@ -497,34 +497,47 @@ async function generateAndStoreAIRecommendations(targetDate: Date) {
 export async function POST(request: Request) {
   try {
     const { date } = await request.json();
-    const targetDate = date ? new Date(date) : new Date();
+    // 최근 한달간 데이터를 전부 처리 하도록 개선
+    const endDate = date ? new Date(date) : new Date();
 
-    // 시간을 00:00:00으로 정규화
-    targetDate.setHours(0, 0, 0, 0);
+    endDate.setHours(0, 0, 0, 0);
 
-    console.log(`AI 추천 배치 계산 시작: ${targetDate.toISOString()}`);
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 30);
+    startDate.setHours(0, 0, 0, 0);
 
-    // 병렬로 배치 계산 실행
-    const [aiZoneCount, hourlyPredictions, heatmapPoints, recommendations] = await Promise.all([
-      calculateAndUpdateAIZones(targetDate),
-      calculateAndStoreHourlyPredictions(targetDate),
-      calculateAndUpdateHeatmapData(targetDate),
-      generateAndStoreAIRecommendations(targetDate),
-    ]);
+    const results = [];
 
-    console.log(
-      `AI 추천 배치 계산 완료: AI존 ${aiZoneCount}개, 시간별 예측 ${hourlyPredictions}건, 히트맵 ${heatmapPoints}개, 추천 ${recommendations}건`,
-    );
+    while (startDate.getTime() < endDate.getTime()) {
+      const targetDate = new Date(startDate);
+      targetDate.setHours(0, 0, 0, 0);
 
-    return NextResponse.json({
-      success: true,
-      data: {
+      console.log(`AI 추천 배치 계산 시작: ${targetDate.toISOString()}`);
+
+      // 병렬로 배치 계산 실행
+      const [aiZoneCount, hourlyPredictions, heatmapPoints, recommendations] = await Promise.all([
+        calculateAndUpdateAIZones(targetDate),
+        calculateAndStoreHourlyPredictions(targetDate),
+        calculateAndUpdateHeatmapData(targetDate),
+        generateAndStoreAIRecommendations(targetDate),
+      ]);
+
+      console.log(
+        `AI 추천 배치 계산 완료: AI존 ${aiZoneCount}개, 시간별 예측 ${hourlyPredictions}건, 히트맵 ${heatmapPoints}개, 추천 ${recommendations}건`,
+      );
+
+      results.push({
         date: targetDate.toISOString(),
-        aiZones: aiZoneCount,
+        aiZoneCount,
         hourlyPredictions,
         heatmapPoints,
         recommendations,
-      },
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: results,
     });
   } catch (error) {
     console.error('AI 추천 배치 계산 오류:', error);

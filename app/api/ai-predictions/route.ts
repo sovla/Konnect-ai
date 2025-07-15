@@ -164,15 +164,38 @@ export async function GET(request: Request) {
         });
 
         // 시간대별로 그룹화
-        const timeSlots = ['14:00', '15:00', '18:00'];
+        const timeSlots = [
+          '00:00',
+          '01:00',
+          '02:00',
+          '03:00',
+          '04:00',
+          '05:00',
+          '06:00',
+          '07:00',
+          '08:00',
+          '09:00',
+          '10:00',
+          '11:00',
+          '12:00',
+          '13:00',
+          '14:00',
+          '15:00',
+          '16:00',
+          '17:00',
+          '18:00',
+          '19:00',
+          '20:00',
+          '21:00',
+          '22:00',
+          '23:00',
+        ];
         const aiPredictions = timeSlots.map((time) => {
           const hour = parseInt(time.split(':')[0]);
-
           const polygons = aiZones
             .filter((zone) => zone.predictions.some((pred) => pred.hour === hour))
             .map((zone) => {
               const prediction = zone.predictions.find((pred) => pred.hour === hour);
-
               return {
                 name: zone.name,
                 coords: zone.coordinates as number[][],
@@ -188,13 +211,11 @@ export async function GET(request: Request) {
                 })),
               };
             });
-
           return {
             time,
             polygons,
           };
         });
-
         const response = {
           success: true,
           data: aiPredictions,
