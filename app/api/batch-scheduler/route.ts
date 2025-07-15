@@ -133,15 +133,9 @@ export async function GET(request: Request) {
 // 자동 실행을 위한 health check (운영 환경에서 cron job이 호출)
 export async function HEAD() {
   try {
-    const now = new Date();
-    const hour = now.getHours();
-
-    // 매일 새벽 2시에 자동 실행
-    if (hour === 2) {
-      executeAIRecommendationBatch().catch((error) => {
-        console.error('자동 배치 실행 중 오류:', error);
-      });
-    }
+    executeAIRecommendationBatch().catch((error) => {
+      console.error('자동 배치 실행 중 오류:', error);
+    });
 
     return new Response(null, { status: 200 });
   } catch (error) {
