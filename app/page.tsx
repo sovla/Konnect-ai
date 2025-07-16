@@ -17,6 +17,7 @@ import { useTodayStats } from '@/app/hooks/stats';
 import { useAnnouncements } from '@/app/hooks/announcement';
 import { AIPolygon } from '@/app/types';
 import Link from 'next/link';
+import { useAuth } from '@/app/hooks';
 
 export default function Dashboard() {
   // API 데이터 훅들
@@ -24,13 +25,14 @@ export default function Dashboard() {
   const aiPredictionsQuery = useAIPredictions('predictions');
   const hourlyPredictionsQuery = useAIPredictions('hourly');
   const announcementsQuery = useAnnouncements({ active: true });
-  console.log(aiPredictionsQuery.data);
+
+  const user = useAuth();
   return (
     <DashboardLayout>
       <div className="p-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">메인 대시보드</h1>
-          <p className="text-gray-600">오늘도 좋은 하루 되세요, 김딜버님!</p>
+          <p className="text-gray-600">오늘도 좋은 하루 되세요, {user.user?.name}님!</p>
         </div>
 
         {/* 4개 위젯 그리드 */}
