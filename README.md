@@ -16,11 +16,17 @@ Konnect AI는 배달 라이더를 위한 AI 기반 데이터 분석 및 운행 �
 
 오늘의 성과(수입, 건수, 운행 시간)와 목표 달성률을 실시간으로 확인하고, AI가 추천하는 핫스팟과 시간대별 콜 예측 정보를 통해 다음 동선을 효율적으로 계획할 수 있습니다.
 
-<img src="./public/images/readme/main-dashboard.png" alt="메인 대시보드" width="49%"/> <img src="./public/images/readme/ai-zone.png" alt="AI 추천 운행 존" width="49%"/>
+<img src="./public/images/readme/main-dashboard.png" alt="메인 대시보드" width="100%"/>
 
 ### 2. AI 추천 운행 존
 
-지도 위에서 실시간 주문 발생 현황(히트맵)과 AI가 예측한 미래의 주문 밀집 지역(폴리곤)을 시각적으로 확인하고, 최적의 운행 경로를 선택할 수 있습니다. 시간대별 예측 필터를 통해 전략적인 휴식과 운행 계획 수립이 가능합니다.
+AI가 분석한 데이터를 바탕으로 가장 수익성이 높은 운행 지역을 추천합니다.
+
+- **실시간 히트맵**: 현재 주문이 몰리는 지역을 히트맵으로 한눈에 파악합니다.
+- **AI 예측 폴리곤**: 과거 데이터와 실시간 정보를 분석하여, 미래에 주문이 많을 것으로 예상되는 'AI 추천 존'을 지도 위에 폴리곤으로 표시합니다. 시간대별 예측 필터로 특정 시간에 가장 확률이 높은 지역을 확인할 수 있습니다.
+- **상세 추천 정보**: 각 추천 존을 클릭하면 예상 콜 수, 평균 배달비, 신뢰도 등 상세 정보를 제공하여 데이터 기반의 의사결정을 돕습니다.
+
+<img src="./public/images/readme/ai-zone.png" alt="AI 추천 운행 존" width="100%"/>
 
 ### 3. 상세 수익 및 운행 이력 분석
 
@@ -28,9 +34,13 @@ Konnect AI는 배달 라이더를 위한 AI 기반 데이터 분석 및 운행 �
 
 <img src="./public/images/readme/analytics.png" alt="수익 분석" width="49%"/> <img src="./public/images/readme/history.png" alt="운행 이력" width="49%"/>
 
-### 4. 사용자 친화적인 인증 및 설정
+### 4. 사용자 친화적인 인증 및 상세 설정
 
-안전한 이메일/비밀번호 기반 회원가입 및 로그인, 그리고 데모 계정 체험 기능을 제공합니다. 일일 목표 수익, 운행 관련 설정, 앱 테마 등 사용자 맞춤형 설정이 가능합니다.
+안전한 이메일/비밀번호 기반의 회원가입 및 로그인 기능을 제공하며, NextAuth.js를 통해 소셜 로그인 확장도 용이합니다. 또한, 사용자 경험을 위한 상세한 맞춤 설정 기능을 제공합니다.
+
+- **운행 맞춤 설정**: 일일/월간 목표 수익, 선호 운행 시간, 최소 주문 금액, 최대 배달 거리, 자동 주문 수락 등 라이더의 운행 스타일을 완벽하게 지원합니다.
+- **앱 환경 설정**: 라이트/다크 모드 테마, 언어(한국어/영어), 지도 초기 화면 등 앱의 사용 환경을 취향에 맞게 변경할 수 있습니다.
+- **알림 설정**: 신규 주문, 목표 달성, 프로모션 등 중요한 정보를 푸시 또는 이메일로 받아볼 수 있도록 선택적으로 제어할 수 있습니다.
 
 <img src="./public/images/readme/login.png" alt="로그인" width="49%"/> <img src="./public/images/readme/settings.png" alt="설정" width="49%"/>
 
@@ -95,35 +105,70 @@ graph TD
 ```prisma
 // /prisma/schema.prisma
 
+// --- User & Authentication ---
 model User {
   id           String        @id @default(cuid())
   email        String        @unique
+  name         String
   password     String?
   riderProfile RiderProfile?
+  accounts     Account[] // For NextAuth social login
+  sessions     Session[]
   // ...
 }
 
+// --- Rider Information ---
 model RiderProfile {
-  id           String     @id @default(cuid())
-  user         User       @relation(fields: [userId], references: [id])
-  dailyGoal    Int
+  id           String        @id @default(cuid())
+  user         User          @relation(fields: [userId], references: [id])
+  userId       String        @unique
+  dailyGoal    Int           // 일일 목표 수익
+  monthlyGoal  Int           // 월간 목표 수익
+  vehicleType  VehicleType
   deliveries   Delivery[]
   userSettings UserSettings?
   // ...
 }
 
+model UserSettings {
+  id             String       @id @default(cuid())
+  riderProfile   RiderProfile @relation(fields: [riderProfileId], references: [id])
+  riderProfileId String       @unique
+  theme          Theme        // LIGHT | DARK | SYSTEM
+  language       Language     // KOREAN | ENGLISH
+  mapDefaultZoom Int
+  // ...
+}
+
+// --- Delivery Data ---
 model Delivery {
   id            String       @id @default(cuid())
   riderProfile  RiderProfile @relation(fields: [riderId], references: [id])
   completedAt   DateTime
+  pickupAddress String
   totalEarnings Int
+  rating        Float
   // ...
 }
 
+// --- AI & Analytics ---
 model AIZone {
+  id              String             @id @default(cuid())
+  name            String
+  coordinates     Json // Polygon coordinates for the zone
+  expectedCalls   Int
+  avgFee          Int
+  predictions     AIZonePrediction[]
+  recommendations AIRecommendation[]
+  // ...
+}
+
+model AIRecommendation {
   id          String             @id @default(cuid())
-  name        String
-  predictions AIZonePrediction[]
+  zone        AIZone             @relation(fields: [zoneId], references: [id])
+  type        RecommendationType // e.g., HISTORICAL_DATA, EVENT
+  title       String
+  description String
   // ...
 }
 
@@ -131,7 +176,8 @@ model HeatmapPoint {
   id        String   @id @default(cuid())
   lat       Float
   lng       Float
-  weight    Float
+  weight    Float    // Represents order density
   timestamp DateTime
+  // ...
 }
 ```
