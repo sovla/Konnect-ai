@@ -38,7 +38,8 @@ AI가 분석한 데이터를 바탕으로 가장 수익성이 높은 운행 지�
 - **앱 환경 설정**: 라이트/다크 모드 테마, 언어(한국어/영어), 지도 초기 화면 등 앱의 사용 환경을 취향에 맞게 변경할 수 있습니다.
 - **알림 설정**: 신규 주문, 목표 달성, 프로모션 등 중요한 정보를 푸시 또는 이메일로 받아볼 수 있도록 선택적으로 제어할 수 있습니다.
 
-<img src="./public/images/readme/login.png" alt="로그인" width="49%"/> <img src="./public/images/readme/settings.png" alt="설정" width="49%"/>
+<img src="./public/images/readme/settings.png" alt="설정" width="100%"/>
+<img src="./public/images/readme/login.png" alt="로그인" width="49%"/>
 
 <img src="./public/images/readme/register.png" alt="회원가입" width="49%"/>
 
