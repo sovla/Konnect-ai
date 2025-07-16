@@ -18,10 +18,16 @@ export default function AccountSettingsPage() {
   // 설정 훅들 사용
   const accountStatsQuery = useAccountStats();
   const deleteAccountMutation = useDeleteAccount();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const handleDeleteAccount = async () => {
     if (deleteConfirmText !== '계정을 삭제하겠습니다' || !password) {
+      return;
+    }
+    // 데모 계정의 경우 삭제가 안되도록 막기
+    if (user?.email === 'kim.delivery@konnect.ai') {
+      // email kim.delivery@konnect.ai
+      alert('데모 계정은 삭제할 수 없습니다.');
       return;
     }
 
