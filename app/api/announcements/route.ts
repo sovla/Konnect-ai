@@ -25,8 +25,8 @@ export async function GET(request: Request) {
       endDate?: { gte: Date };
     } = {
       // 현재 유효한 공지사항만 조회 (시작일 <= 오늘 <= 종료일)
-      startDate: { lte: new Date() },
-      endDate: { gte: new Date() },
+      // startDate: { lte: new Date() },
+      // endDate: { gte: new Date() },
     };
 
     // 타입별 필터링

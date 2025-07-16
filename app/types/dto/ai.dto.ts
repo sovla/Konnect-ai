@@ -14,7 +14,7 @@ export const PredictionReasonSchema = z.object({
 export const PredictionPolygonSchema = z.object({
   name: z.string(),
   coords: z.array(z.array(z.number()).length(2)), // [lat, lng] 배열의 배열
-  expectedCalls: z.number().min(0),
+  expectedCalls: z.number(),
   avgFee: z.number().min(0),
   confidence: z.number().min(0).max(100),
   reasons: z.array(PredictionReasonSchema),

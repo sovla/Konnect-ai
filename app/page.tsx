@@ -89,13 +89,7 @@ export default function Dashboard() {
                 <div className="space-y-4">
                   {/* 카카오 미니맵 */}
                   <div className="h-32">
-                    <KakaoMap
-                      width="100%"
-                      height="128px"
-                      miniMode={true}
-                      showCurrentLocation={true}
-                      className="rounded-lg"
-                    />
+                    <KakaoMap width="100%" height="128px" miniMode={true} className="rounded-lg" />
                   </div>
                   {/* 핫스팟 리스트 */}
                   <div className="space-y-2">
@@ -132,39 +126,44 @@ export default function Dashboard() {
               errorMessage="예측 데이터를 불러올 수 없습니다"
               loadingSkeleton={<PredictionSkeleton />}
             >
-              {(data) => (
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-600">지금부터 3시간 동안의 콜 예측</p>
+              {(_data) => {
+                // 현재 시간대 이후 데이터만 사용하기
+                const currentHour = new Date().getHours();
+                const filteredData = _data.data.filter((data) => data.hour > currentHour);
+                return (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600">지금부터 3시간 동안의 콜 예측</p>
 
-                  <div className="space-y-3">
-                    {data.data.slice(0, 3).map((prediction) => {
-                      const expectedCalls = prediction.expectedOrders || 0;
-                      const level = expectedCalls > 10 ? 'high' : expectedCalls > 6 ? 'medium' : 'low';
-                      const levelText = level === 'high' ? '많음' : level === 'medium' ? '보통' : '적음';
-                      const levelColor = level === 'high' ? 'green' : level === 'medium' ? 'yellow' : 'red';
-                      const progressWidth = Math.min((expectedCalls / 15) * 100, 100);
+                    <div className="space-y-3">
+                      {filteredData.slice(0, 3).map((prediction) => {
+                        const expectedCalls = prediction.expectedOrders || 0;
+                        const level = expectedCalls > 10 ? 'high' : expectedCalls > 6 ? 'medium' : 'low';
+                        const levelText = level === 'high' ? '많음' : level === 'medium' ? '보통' : '적음';
+                        const levelColor = level === 'high' ? 'green' : level === 'medium' ? 'yellow' : 'red';
+                        const progressWidth = Math.min((expectedCalls / 15) * 100, 100);
 
-                      return (
-                        <div key={prediction.hour} className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">
-                            {prediction.hour}:00 - {prediction.hour + 1}:00
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <div className="w-16 bg-gray-200 rounded-full h-2">
-                              <div
-                                className={`bg-${levelColor}-500 h-2 rounded-full`}
-                                style={{ width: `${progressWidth}%` }}
-                              ></div>
+                        return (
+                          <div key={prediction.hour} className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">
+                              {prediction.hour}:00 - {prediction.hour + 1}:00
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <div className="w-16 bg-gray-200 rounded-full h-2">
+                                <div
+                                  className={`bg-${levelColor}-500 h-2 rounded-full`}
+                                  style={{ width: `${progressWidth}%` }}
+                                ></div>
+                              </div>
+                              <span className={`text-sm font-medium text-${levelColor}-600`}>{levelText}</span>
+                              <span className="text-xs text-gray-500 ml-1">({expectedCalls}건)</span>
                             </div>
-                            <span className={`text-sm font-medium text-${levelColor}-600`}>{levelText}</span>
-                            <span className="text-xs text-gray-500 ml-1">({expectedCalls}건)</span>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              }}
             </QueryWrapper>
           </DashboardCard>
 

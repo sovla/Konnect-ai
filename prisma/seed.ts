@@ -188,6 +188,61 @@ async function main() {
 
   console.log('✅ 배달 내역 데이터 생성 완료');
 
+  // 5. 공지사항 데이터 생성
+
+  const today = new Date();
+  const announcementsData: Prisma.AnnouncementCreateInput[] = [
+    {
+      id: 'announce-001',
+      title: '🎉 주말 특별 프로모션',
+      content: '토요일, 일요일 18:00~22:00 시간당 추가 1,000원!',
+      type: AnnouncementType.PROMOTION,
+      priority: Priority.HIGH,
+      startDate: new Date(today.setDate(today.getDate() - 1)),
+      endDate: new Date(today.setDate(today.getDate() + 7)),
+      isActive: true,
+    },
+    {
+      id: 'announce-002',
+      title: '⚠️ 센텀시티 도로 공사',
+      content: '센텀시티 일대 도로 공사로 인한 우회로 안내',
+      type: AnnouncementType.NOTICE,
+      priority: Priority.MEDIUM,
+      startDate: new Date(today.setDate(today.getDate() - 1)),
+      endDate: new Date(today.setDate(today.getDate() + 7)),
+      isActive: true,
+    },
+    {
+      id: 'announce-003',
+      title: '💰 신규 인센티브 정책',
+      content: '월 300건 이상 완료 시 보너스 10만원 지급',
+      type: AnnouncementType.INCENTIVE,
+      priority: Priority.HIGH,
+      startDate: new Date(today.setDate(today.getDate() - 1)),
+      endDate: new Date(today.setDate(today.getDate() + 7)),
+      isActive: true,
+    },
+  ];
+
+  for (const announcement of announcementsData) {
+    await prisma.announcement.upsert({
+      where: { id: announcement.id },
+      update: {},
+      create: {
+        id: announcement.id,
+        title: announcement.title,
+        content: announcement.content,
+        type: announcement.type as AnnouncementType,
+        priority: announcement.priority as Priority,
+        startDate: announcement.startDate,
+        endDate: announcement.endDate,
+        isActive: announcement.isActive,
+      },
+    });
+  }
+
+  console.log('✅ 공지사항 데이터 생성 완료');
+
   // 3. AI 예측 구역 데이터 생성
   const aiZonesData: Prisma.AIZoneCreateInput[] = [
     {
@@ -347,21 +402,24 @@ async function main() {
   // 4. AI 예측 시간대별 데이터 생성 (폴리곤 표시를 위해 필요)
   const aiZoneRecords = await prisma.aIZone.findMany();
   for (const zone of aiZoneRecords) {
-    // 각 구역별로 14시, 15시, 18시 예측 데이터 생성
-    const timeSlots = [14, 15, 18];
+    const timeSlots = Array.from({ length: 24 }, (_, i) => i);
     for (const hour of timeSlots) {
+      const predictionDate = new Date();
+      // seed 생성 기준으로 랜덤한 시각
+      predictionDate.setHours(Math.floor(Math.random() * 24), 0, 0, 0);
       await prisma.aIZonePrediction.upsert({
         where: {
           zoneId_hour_predictionDate: {
             zoneId: zone.id,
             hour: hour,
-            predictionDate: new Date('2025-01-14'),
+
+            predictionDate,
           },
         },
         update: {},
         create: {
           zoneId: zone.id,
-          predictionDate: new Date('2025-07-14T14:00:00'), // 고정 날짜 (개발용)
+          predictionDate, // 고정 날짜 (개발용)
           hour: hour,
           expectedCalls: zone.expectedCalls + Math.floor(Math.random() * 5) - 2, // 약간의 변동
           confidence: zone.confidence + (Math.random() * 0.1 - 0.05), // 약간의 변동
@@ -369,8 +427,6 @@ async function main() {
       });
     }
   }
-
-  console.log('✅ AI 예측 시간대별 데이터 생성 완료');
 
   // 5. 히트맵 데이터 생성
   const heatmapData: Prisma.HeatmapPointCreateInput[] = [
@@ -405,62 +461,9 @@ async function main() {
 
   console.log('✅ 히트맵 데이터 생성 완료');
 
-  // 5. 공지사항 데이터 생성
-  const announcementsData: Prisma.AnnouncementCreateInput[] = [
-    {
-      id: 'announce-001',
-      title: '🎉 주말 특별 프로모션',
-      content: '토요일, 일요일 18:00~22:00 시간당 추가 1,000원!',
-      type: AnnouncementType.PROMOTION,
-      priority: Priority.HIGH,
-      startDate: new Date('2025-01-11'),
-      endDate: new Date('2025-01-19'),
-      isActive: true,
-    },
-    {
-      id: 'announce-002',
-      title: '⚠️ 센텀시티 도로 공사',
-      content: '센텀시티 일대 도로 공사로 인한 우회로 안내',
-      type: AnnouncementType.NOTICE,
-      priority: Priority.MEDIUM,
-      startDate: new Date('2025-01-14'),
-      endDate: new Date('2025-01-20'),
-      isActive: true,
-    },
-    {
-      id: 'announce-003',
-      title: '💰 신규 인센티브 정책',
-      content: '월 300건 이상 완료 시 보너스 10만원 지급',
-      type: AnnouncementType.INCENTIVE,
-      priority: Priority.HIGH,
-      startDate: new Date('2025-01-01'),
-      endDate: new Date('2025-01-31'),
-      isActive: true,
-    },
-  ];
-
-  for (const announcement of announcementsData) {
-    await prisma.announcement.upsert({
-      where: { id: announcement.id },
-      update: {},
-      create: {
-        id: announcement.id,
-        title: announcement.title,
-        content: announcement.content,
-        type: announcement.type as AnnouncementType,
-        priority: announcement.priority as Priority,
-        startDate: announcement.startDate,
-        endDate: announcement.endDate,
-        isActive: announcement.isActive,
-      },
-    });
-  }
-
-  console.log('✅ 공지사항 데이터 생성 완료');
-
   // 6. 플랫폼 통계 데이터 생성
   const platformStatsData: Prisma.PlatformStatsCreateInput = {
-    date: new Date('2025-01-14'),
+    date: new Date('2025-07-14'),
     avgAcceptanceRate: 92.0,
     avgDeliveryTime: 21,
     avgDailyEarnings: 120000,
