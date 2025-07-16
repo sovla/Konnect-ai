@@ -65,6 +65,30 @@ export default function LoginPage() {
     }
   };
 
+  // 데모 계정으로 로그인
+  const handleDemoLogin = async () => {
+    try {
+      const result = await signIn('credentials', {
+        email: 'kim.delivery@konnect.ai',
+        password: 'hashedpassword',
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError('root', {
+          message: '데모 계정 로그인에 실패했습니다.',
+        });
+      } else {
+        router.push('/');
+      }
+    } catch (error) {
+      console.error('데모 로그인 에러:', error);
+      setError('root', {
+        message: '데모 로그인 중 오류가 발생했습니다.',
+      });
+    }
+  };
+
   return (
     <>
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -177,6 +201,27 @@ export default function LoginPage() {
                   {isSubmitting ? '로그인 중...' : '로그인'}
                 </button>
               </div>
+
+              {/* 데모 로그인 버튼 */}
+              <div className="relative flex items-center justify-center">
+                <span className="absolute inset-x-0 h-px bg-gray-300"></span>
+                <span className="relative bg-white px-2 text-sm text-gray-500">또는</span>
+              </div>
+
+              <div>
+                <button
+                  type="button"
+                  onClick={handleDemoLogin}
+                  disabled={isSubmitting}
+                  className="group relative w-full flex justify-center py-3 px-4 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                >
+                  <span className="absolute left-0 inset-y-0 flex items-center pl-3">
+                    <LogIn className="h-5 w-5 text-gray-400" />
+                  </span>
+                  데모 계정으로 로그인
+                </button>
+              </div>
+
               {/* 회원가입 링크 */}
               <div className="text-center">
                 <p className="text-sm text-gray-600">

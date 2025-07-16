@@ -15,6 +15,8 @@ import { formatCurrency } from './utils/dateHelpers';
 import { useAIPredictions } from '@/app/hooks/ai';
 import { useTodayStats } from '@/app/hooks/stats';
 import { useAnnouncements } from '@/app/hooks/announcement';
+import { AIPolygon } from '@/app/types';
+import Link from 'next/link';
 
 export default function Dashboard() {
   // API 데이터 훅들
@@ -22,7 +24,7 @@ export default function Dashboard() {
   const aiPredictionsQuery = useAIPredictions('predictions');
   const hourlyPredictionsQuery = useAIPredictions('hourly');
   const announcementsQuery = useAnnouncements({ active: true });
-
+  console.log(aiPredictionsQuery.data);
   return (
     <DashboardLayout>
       <div className="p-6">
@@ -85,36 +87,64 @@ export default function Dashboard() {
               errorMessage="핫스팟 데이터를 불러올 수 없습니다"
               loadingSkeleton={<HotspotSkeleton />}
             >
-              {(data) => (
-                <div className="space-y-4">
-                  {/* 카카오 미니맵 */}
-                  <div className="h-32">
-                    <KakaoMap width="100%" height="128px" miniMode={true} className="rounded-lg" />
-                  </div>
-                  {/* 핫스팟 리스트 */}
-                  <div className="space-y-2">
-                    <p className="text-xs text-gray-500 mb-2">🔥 현재 시간대 AI 추천 핫스팟</p>
-                    {data.data[0]?.polygons.slice(0, 2).map((polygon, index) => (
-                      <div
-                        key={index}
-                        className={`flex items-center justify-between p-2 rounded ${
-                          index === 0 ? 'bg-red-50' : 'bg-orange-50'
-                        }`}
-                      >
-                        <div>
-                          <span className="text-sm font-medium">{polygon.name}</span>
-                          <p className="text-xs text-gray-500">
-                            예상 콜: {polygon.expectedCalls}건/시간 | 평균료: {formatCurrency(polygon.avgFee)}
-                          </p>
-                        </div>
-                        <span className={`text-xs font-medium ${index === 0 ? 'text-red-600' : 'text-orange-600'}`}>
-                          {index === 0 ? 'HOT' : 'WARM'}
-                        </span>
+              {(data) => {
+                // polygon중 안비어 있는 경우 가져와서 보여주기
+                const polygons: (AIPolygon & { time: string })[] = [];
+                const currentHour = new Date().getHours();
+                const filteredData = data.data.filter(
+                  (polygon) => polygon.polygons.length > 0 && parseInt(polygon.time.split(':')[0], 10) >= currentHour,
+                );
+
+                filteredData.forEach((aiPrediction) => {
+                  // 현재 시간대로 부터 3시간 이내의 값들만 가져오기
+
+                  aiPrediction.polygons.forEach((polygon) => {
+                    polygons.push({
+                      ...polygon,
+                      time: aiPrediction.time,
+                    });
+                  });
+                });
+
+                return (
+                  <div className="space-y-4">
+                    {/* 카카오 미니맵 클릭시 화면 이동 */}
+                    <Link href={`/ai-zones`}>
+                      <div className="h-32">
+                        <KakaoMap width="100%" height="128px" miniMode={true} className="rounded-lg" />
                       </div>
-                    ))}
+                    </Link>
+                    {/* 핫스팟 리스트 */}
+                    <div className="space-y-2">
+                      <p className="text-xs text-gray-500 mb-2">🔥 현재 시간대 AI 추천 핫스팟</p>
+                      {polygons.slice(0, 3).map((polygon, index) => (
+                        <div
+                          key={index}
+                          className={`flex items-center justify-between p-2 rounded ${
+                            index === 0 ? 'bg-red-50' : 'bg-orange-50'
+                          }`}
+                        >
+                          <div>
+                            {/** 시간 표현 추가  */}
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-blue-500">
+                                ({polygon.time.split(':')[0]}시 {polygon.time.split(':')[1]}분)
+                              </span>
+                              <span className="text-sm font-medium">{polygon.name}</span>
+                            </div>
+                            <p className="text-xs text-gray-500">
+                              예상 콜: {polygon.expectedCalls}건/시간 | 평균료: {formatCurrency(polygon.avgFee)}
+                            </p>
+                          </div>
+                          <span className={`text-xs font-medium ${index === 0 ? 'text-red-600' : 'text-orange-600'}`}>
+                            {index === 0 ? 'HOT' : 'WARM'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              }}
             </QueryWrapper>
           </DashboardCard>
 
