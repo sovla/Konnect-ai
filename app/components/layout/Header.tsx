@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { User, Menu, LogOut, Loader2 } from 'lucide-react';
 import { useAuth } from '../../hooks';
+import Link from 'next/link';
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -21,6 +22,12 @@ export default function Header({ onMenuClick, isMobile = false }: HeaderProps) {
     }
     setShowProfile(false);
   };
+
+  const vehicleOptions = [
+    { value: 'MOTORCYCLE', label: '오토바이', icon: '🏍️' },
+    { value: 'BICYCLE', label: '자전거', icon: '🚲' },
+    { value: 'CAR', label: '자동차', icon: '🚗' },
+  ];
 
   return (
     <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm">
@@ -119,17 +126,23 @@ export default function Header({ onMenuClick, isMobile = false }: HeaderProps) {
                 </p>
                 {riderInfo && (
                   <div className="mt-1 text-xs text-gray-400">
-                    {riderInfo.vehicleType} • 평점 {riderInfo.averageRating}
+                    ({vehicleOptions.find((v) => v.value === riderInfo.vehicleType)?.icon})
+                    {vehicleOptions.find((v) => v.value === riderInfo.vehicleType)?.label} • 평점{' '}
+                    {riderInfo.averageRating.toFixed(1)}
                   </div>
                 )}
               </div>
               <div className="p-2">
-                <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded">
-                  프로필 설정
-                </button>
-                <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded">
-                  환경 설정
-                </button>
+                <Link href="/settings/profile">
+                  <div className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded">
+                    프로필 설정
+                  </div>
+                </Link>
+                <Link href="/settings/app">
+                  <div className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded">
+                    환경 설정
+                  </div>
+                </Link>
                 <hr className="my-2" />
                 <button
                   onClick={handleLogout}
