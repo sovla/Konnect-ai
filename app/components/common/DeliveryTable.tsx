@@ -7,12 +7,13 @@ import { formatCurrency } from '@/app/utils';
 export interface DeliveryTableProps {
   deliveries: Delivery[];
   loading?: boolean;
+  totalDeliveriesCount: number;
 }
 
 type SortField = 'date' | 'completedAt' | 'earnings' | 'rating' | 'deliveryTime';
 type SortDirection = 'asc' | 'desc';
 
-export default function DeliveryTable({ deliveries, loading = false }: DeliveryTableProps) {
+export default function DeliveryTable({ deliveries, loading = false, totalDeliveriesCount }: DeliveryTableProps) {
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [searchTerm, setSearchTerm] = useState('');
@@ -119,16 +120,10 @@ export default function DeliveryTable({ deliveries, loading = false }: DeliveryT
     <div className="space-y-4">
       {/* 검색 바 */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex-1 max-w-md">
-          <input
-            type="text"
-            placeholder="출발지 또는 도착지로 검색..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+        <div className="flex-1 max-w-md"></div>
+        <div className="text-sm text-gray-600">
+          {filteredAndSortedDeliveries.length} / {totalDeliveriesCount}건
         </div>
-        <div className="text-sm text-gray-600">총 {filteredAndSortedDeliveries.length}건의 배달 내역</div>
       </div>
 
       {/* 데스크톱 테이블 */}

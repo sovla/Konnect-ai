@@ -48,6 +48,42 @@ export const getDeliveries = async (params?: { date?: string; limit?: number; pa
   return apiClient.get<DeliveriesResponse>(`/deliveries?${searchParams.toString()}`);
 };
 
+// 배달 내역 조회 (infinity scroll용 커서 기반)
+export const getDeliveriesInfinite = async (params?: {
+  period?: 'all' | '7days' | 'month';
+  limit?: number;
+  cursor?: string;
+}) => {
+  const searchParams = new URLSearchParams();
+  if (params?.period) searchParams.append('period', params.period);
+  if (params?.limit) searchParams.append('limit', params.limit.toString());
+  if (params?.cursor) searchParams.append('cursor', params.cursor);
+
+  return apiClient.get<DeliveriesResponse & { cursor: { nextCursor: string | null; hasNext: boolean }; total: number }>(
+    `/deliveries?${searchParams.toString()}`,
+  );
+};
+
+// 배달 통계 조회 (기간별)
+export const getDeliveryStats = async (params?: { period?: 'all' | '7days' | 'month' }) => {
+  const searchParams = new URLSearchParams();
+  if (params?.period) searchParams.append('period', params.period);
+
+  return apiClient.get<
+    ApiResponse<{
+      totalEarnings: number;
+      totalBaseEarnings: number;
+      totalPromoEarnings: number;
+      totalTipEarnings: number;
+      totalDeliveries: number;
+      avgEarningsPerDelivery: number;
+      avgRating: number;
+      avgDeliveryTime: number;
+      totalDeliveryTime: number;
+    }>
+  >(`/deliveries/stats?${searchParams.toString()}`);
+};
+
 // 라이더 프로필 조회
 export const getRiderProfile = async () => {
   return apiClient.get<RiderSettingsResponse>('/rider-profile');

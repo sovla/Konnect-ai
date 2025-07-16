@@ -4,7 +4,7 @@ import { ReactNode } from 'react';
 import { LucideIcon } from 'lucide-react';
 
 interface DashboardCardProps {
-  title: string;
+  title: ReactNode;
   children: ReactNode;
   icon?: LucideIcon;
   action?: ReactNode;
