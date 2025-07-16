@@ -6,10 +6,6 @@ Konnect AI는 배달 라이더를 위한 AI 기반 데이터 분석 및 운행 �
 
 <br/>
 
-<p align="center">
-  <img src="./public/images/readme/main-dashboard.png" alt="메인 대시보드" width="100%"/>
-</p>
-
 ## ✨ 주요 기능 (Features)
 
 ### 1. 한눈에 보는 메인 대시보드
