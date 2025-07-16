@@ -1,11 +1,11 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { createDateRange, getCurrentHour } from '../utils/dateHelpers';
+import { createDateRange } from '../utils/dateHelpers';
 
 interface FilterState {
   showRealTimeHeatmap: boolean;
   showAIPredictions: boolean;
-  selectedTimeSlot: number; // 13-22시 범위
+  selectedTimeSlot: { start: number; end: number } | null; // 13-22시 범위, 4시간 단위
 }
 
 interface DateRangeState {
@@ -42,7 +42,7 @@ interface UIActions {
   // 지도 필터 액션
   toggleRealTimeHeatmap: () => void;
   toggleAIPredictions: () => void;
-  setTimeSlot: (slot: number) => void;
+  setTimeSlot: (slot: { start: number; end: number } | null) => void;
   resetMapFilters: () => void;
 
   // 날짜 범위 액션
@@ -66,6 +66,27 @@ const getDefaultDateRange = (): DateRangeState => {
   };
 };
 
+// 현재 시간에 해당하는 기본 시간 범위(4시간)를 설정
+const getDefaultTimeSlot = (): { start: number; end: number } | null => {
+  const currentHour = new Date().getHours();
+  // 예시: 13-16, 17-20, 21-24시
+  if (currentHour >= 0 && currentHour < 3) {
+    return { start: 0, end: 3 };
+  }
+  if (currentHour >= 3 && currentHour < 6) {
+    return { start: 3, end: 6 };
+  }
+  if (currentHour >= 6 && currentHour < 9) {
+    return { start: 6, end: 9 };
+  }
+  if (currentHour >= 9 && currentHour < 12) {
+    return { start: 9, end: 12 };
+  }
+  // 기본값 또는 다른 시간대 처리
+
+  return { start: 13, end: 16 };
+};
+
 export const useUIStore = create<UIStore>()(
   devtools(
     (set) => ({
@@ -74,7 +95,7 @@ export const useUIStore = create<UIStore>()(
       mapFilters: {
         showRealTimeHeatmap: true,
         showAIPredictions: true,
-        selectedTimeSlot: getCurrentHour(), // 현재 시간으로 초기화
+        selectedTimeSlot: null,
       },
       dateRange: getDefaultDateRange(),
       isLoading: false,
@@ -115,7 +136,7 @@ export const useUIStore = create<UIStore>()(
           mapFilters: {
             showRealTimeHeatmap: true,
             showAIPredictions: true,
-            selectedTimeSlot: getCurrentHour(),
+            selectedTimeSlot: getDefaultTimeSlot(),
           },
         })),
 

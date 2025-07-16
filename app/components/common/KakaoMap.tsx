@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { Map, useKakaoLoader, MapMarker, Polygon, CustomOverlayMap } from 'react-kakao-maps-sdk';
+import { Map as KakaoMapComponent, useKakaoLoader, Polygon, CustomOverlayMap } from 'react-kakao-maps-sdk';
 import { useMapStore } from '../../store/mapStore';
 import { useUIStore } from '../../store/uiStore';
 import { useAIPredictions, useMapInteraction } from '../../hooks';
@@ -8,13 +9,13 @@ import { useMemo } from 'react';
 import PolygonInfoPopup from '../map/PolygonInfoPopup';
 import HeatmapInfoPopup from '../map/HeatmapInfoPopup';
 import HeatmapOverlay from '../map/HeatmapOverlay';
+import { PredictionReason } from '../../types/dto';
 
 interface KakaoMapProps {
   width?: string;
   height?: string;
   className?: string;
   miniMode?: boolean; // 미니맵 모드 추가
-  showCurrentLocation?: boolean; // 현재 위치 마커 표시 여부
 }
 
 export default function KakaoMap({
@@ -22,7 +23,6 @@ export default function KakaoMap({
   height = '400px',
   className = '',
   miniMode = false,
-  showCurrentLocation = true,
 }: KakaoMapProps) {
   // Zustand 상태
   const { center, zoom } = useMapStore();
@@ -46,25 +46,72 @@ export default function KakaoMap({
 
   // AI 예측 폴리곤 데이터 조회
   const { data: predictionsResponse } = useAIPredictions('predictions');
-  const predictionsData = predictionsResponse?.data || [];
+  const predictionsData = useMemo(() => {
+    return predictionsResponse?.data || [];
+  }, [predictionsResponse]);
 
-  // 현재 선택된 시간대의 폴리곤 데이터 필터링 (메모이제이션)
-  const currentPolygons = useMemo(() => {
-    if (miniMode) {
-      // 미니맵 모드에서는 현재 시간의 상위 3개 핫스팟만 표시
-      const currentHour = new Date().getHours();
-      const currentTimeSlot = `${currentHour}:00`;
-      const currentPrediction = predictionsData.find((prediction) => prediction.time === currentTimeSlot);
-      // 줌 레벨 조절
-      // 현재 시간대의 데이터가 없으면 첫 번째 시간대의 데이터를 사용
-      const fallbackPrediction = predictionsData.length > 0 ? predictionsData[0] : null;
-      const prediction = currentPrediction || fallbackPrediction;
-      return prediction?.polygons.slice(0, 3) || [];
+  // 현재 선택된 시간대의 폴리곤 데이터 필터링 및 그룹화 (메모이제이션)
+  const groupedPolygons = useMemo(() => {
+    if (!mapFilters.selectedTimeSlot || !predictionsData) {
+      return [];
     }
-    return (
-      predictionsData.find((prediction) => prediction.time === `${mapFilters.selectedTimeSlot}:00`)?.polygons || []
+    const { start, end } = mapFilters.selectedTimeSlot;
+
+    const filteredPredictions = predictionsData.filter((p) => {
+      const hour = parseInt(p.time.split(':')[0], 10);
+      return hour >= start && hour < end;
+    });
+
+    const polygonGroups = new Map<
+      string,
+      {
+        coords: number[][];
+        reasons: PredictionReason[];
+        hourlyPredictions: { hour: number; expectedCalls: number; avgFee: number; confidence: number }[];
+      }
+    >();
+
+    for (const prediction of filteredPredictions) {
+      for (const polygon of prediction.polygons) {
+        if (!polygonGroups.has(polygon.name)) {
+          polygonGroups.set(polygon.name, {
+            coords: polygon.coords,
+            reasons:
+              polygon.reasons?.map((reason) => ({
+                type: reason.type,
+                title: reason.title,
+                description: reason.description,
+                impact: reason.impact,
+                confidence: reason.confidence,
+              })) || [],
+            hourlyPredictions: [],
+          });
+        }
+        polygonGroups.get(polygon.name)!.hourlyPredictions.push({
+          hour: parseInt(prediction.time.split(':')[0], 10),
+          expectedCalls: polygon.expectedCalls,
+          avgFee: polygon.avgFee,
+          confidence: polygon.confidence,
+        });
+      }
+    }
+
+    return Array.from(polygonGroups.entries()).map(
+      ([name, data]: [string, { coords: number[][]; reasons: PredictionReason[]; hourlyPredictions: any[] }]) => ({
+        name,
+        ...data,
+      }),
     );
-  }, [predictionsData, mapFilters.selectedTimeSlot, miniMode]);
+  }, [predictionsData, mapFilters.selectedTimeSlot]);
+
+  // 미니맵용 폴리곤 데이터 (기존 로직 단순화)
+  const miniMapPolygons = useMemo(() => {
+    if (!predictionsData || predictionsData.length === 0) return [];
+    const latestPrediction = predictionsData[predictionsData.length - 1];
+    return latestPrediction.polygons.slice(0, 3);
+  }, [predictionsData]);
+
+  const currentPolygons = miniMode ? miniMapPolygons : groupedPolygons;
 
   // 카카오맵 API 로더
   const [loading, error] = useKakaoLoader({
@@ -115,7 +162,7 @@ export default function KakaoMap({
 
   return (
     <div className={`relative ${className}`}>
-      <Map
+      <KakaoMapComponent
         center={{
           lat: center.lat,
           lng: center.lng,
@@ -131,15 +178,7 @@ export default function KakaoMap({
         draggable={!miniMode} // 미니맵에서는 드래그 비활성화
         zoomable={!miniMode} // 미니맵에서는 줌 비활성화
       >
-        {/* 현재 위치 마커 */}
-        {showCurrentLocation && (
-          <MapMarker
-            position={{
-              lat: center.lat,
-              lng: center.lng,
-            }}
-          />
-        )}
+        {/* 현재 위치 마커 제거 */}
 
         {/* 실시간 히트맵 표시 (미니맵에서는 표시하지 않음) */}
         {!miniMode &&
@@ -164,18 +203,20 @@ export default function KakaoMap({
 
         {/* AI 예측 폴리곤 표시 */}
         {(miniMode || mapFilters.showAIPredictions) &&
-          currentPolygons.map((polygon, index) => (
-            <Polygon
-              key={`polygon-${index}`}
-              path={polygon.coords.map(([lat, lng]) => ({ lat, lng }))}
-              strokeWeight={miniMode ? 1 : 2}
-              strokeColor="#10b981"
-              strokeOpacity={0.8}
-              fillColor="#10b981"
-              fillOpacity={miniMode ? 0.3 : 0.2}
-              onClick={miniMode ? undefined : (map, mouseEvent) => handlePolygonClick(polygon, mouseEvent)}
-            />
-          ))}
+          currentPolygons
+            .filter((polygon) => typeof polygon === 'object' && 'hourlyPredictions' in polygon)
+            .map((polygon, index) => (
+              <Polygon
+                key={`polygon-${polygon.name}-${index}`}
+                path={polygon.coords.map(([lat, lng]) => ({ lat, lng }))}
+                strokeWeight={miniMode ? 1 : 2}
+                strokeColor="#10b981"
+                strokeOpacity={0.8}
+                fillColor="#10b981"
+                fillOpacity={miniMode ? 0.3 : 0.2}
+                onClick={miniMode ? undefined : (_map, mouseEvent) => handlePolygonClick(polygon as any, mouseEvent)} // FIX: TypeError
+              />
+            ))}
 
         {/* 미니맵에서는 팝업 표시하지 않음 */}
         {!miniMode && (
@@ -184,9 +225,7 @@ export default function KakaoMap({
             {clickedPolygonInfo && (
               <PolygonInfoPopup
                 name={clickedPolygonInfo.name}
-                expectedCalls={clickedPolygonInfo.expectedCalls}
-                avgFee={clickedPolygonInfo.avgFee}
-                confidence={clickedPolygonInfo.confidence}
+                hourlyPredictions={clickedPolygonInfo.hourlyPredictions}
                 reasons={clickedPolygonInfo.reasons}
                 position={clickedPolygonInfo.position}
                 onClose={closePolygonInfo}
@@ -205,7 +244,7 @@ export default function KakaoMap({
             )}
           </>
         )}
-      </Map>
+      </KakaoMapComponent>
 
       {/* 미니맵 오버레이 정보 */}
       {miniMode && currentPolygons.length > 0 && (

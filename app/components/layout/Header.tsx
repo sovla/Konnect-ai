@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Bell, Settings, User, Menu, LogOut, Loader2 } from 'lucide-react';
-import { useAuth, useNotifications } from '../../hooks';
+import { User, Menu, LogOut, Loader2 } from 'lucide-react';
+import { useAuth } from '../../hooks';
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -10,12 +10,10 @@ interface HeaderProps {
 }
 
 export default function Header({ onMenuClick, isMobile = false }: HeaderProps) {
-  const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
 
   // 인증 및 알림 훅 사용
   const { user, riderInfo, logout, isLoggingOut } = useAuth();
-  const { notifications, unreadCount } = useNotifications();
 
   const handleLogout = () => {
     if (window.confirm('정말 로그아웃하시겠습니까?')) {
@@ -45,7 +43,7 @@ export default function Header({ onMenuClick, isMobile = false }: HeaderProps) {
 
       <div className="flex items-center gap-3">
         {/* 현재 상태 표시 */}
-        <div
+        {/* <div
           className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full ${
             riderInfo?.isOnline ? 'bg-green-100' : 'bg-gray-100'
           }`}
@@ -56,10 +54,10 @@ export default function Header({ onMenuClick, isMobile = false }: HeaderProps) {
           <span className={`text-sm font-medium ${riderInfo?.isOnline ? 'text-green-700' : 'text-gray-600'}`}>
             {riderInfo?.isOnline ? '온라인' : '오프라인'}
           </span>
-        </div>
+        </div> */}
 
         {/* 알림 */}
-        <div className="relative">
+        {/* <div className="relative">x
           <button
             onClick={() => setShowNotifications(!showNotifications)}
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative"
@@ -93,12 +91,12 @@ export default function Header({ onMenuClick, isMobile = false }: HeaderProps) {
               </div>
             </div>
           )}
-        </div>
+        </div> */}
 
         {/* 설정 */}
-        <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+        {/* <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
           <Settings className="w-5 h-5 text-gray-600" />
-        </button>
+        </button> */}
 
         {/* 프로필 */}
         <div className="relative">
@@ -116,7 +114,9 @@ export default function Header({ onMenuClick, isMobile = false }: HeaderProps) {
             <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
               <div className="p-4 border-b border-gray-100">
                 <p className="font-semibold text-gray-900">{user?.name || '사용자'}</p>
-                <p className="text-sm text-gray-500">{riderInfo ? `라이더 ID: ${riderInfo.riderId}` : user?.email}</p>
+                <p className="text-sm text-gray-500 text-nowrap overflow-hidden text-ellipsis">
+                  {riderInfo ? `라이더 ID: ${riderInfo.riderId}` : user?.email}
+                </p>
                 {riderInfo && (
                   <div className="mt-1 text-xs text-gray-400">
                     {riderInfo.vehicleType} • 평점 {riderInfo.averageRating}

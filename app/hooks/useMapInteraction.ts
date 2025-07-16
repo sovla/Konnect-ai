@@ -1,19 +1,18 @@
 import { useState, useCallback, useRef } from 'react';
 import { useMapStore } from '../store/mapStore';
+import { PredictionReason } from '../types/dto';
 
-interface PolygonClickInfo {
-  name: string;
+interface HourlyPredictionInfo {
+  hour: number;
   expectedCalls: number;
   avgFee: number;
   confidence: number;
+}
+export interface PolygonClickInfo {
+  name: string;
+  hourlyPredictions: HourlyPredictionInfo[];
+  reasons?: PredictionReason[];
   position: { lat: number; lng: number };
-  reasons?: Array<{
-    type: string;
-    title: string;
-    description: string;
-    impact: string;
-    confidence: number;
-  }>;
 }
 
 interface HeatmapClickInfo {
@@ -66,28 +65,11 @@ export function useMapInteraction() {
 
   // 폴리곤 클릭 이벤트 핸들러
   const handlePolygonClick = useCallback(
-    (
-      polygon: {
-        name: string;
-        expectedCalls: number;
-        avgFee: number;
-        confidence: number;
-        reasons?: Array<{
-          type: string;
-          title: string;
-          description: string;
-          impact: string;
-          confidence: number;
-        }>;
-      },
-      event: { latLng: { getLat: () => number; getLng: () => number } },
-    ) => {
+    (polygon: PolygonClickInfo, event: { latLng: { getLat: () => number; getLng: () => number } }) => {
       const clickPosition = event.latLng;
       setClickedPolygonInfo({
         name: polygon.name,
-        expectedCalls: polygon.expectedCalls,
-        avgFee: polygon.avgFee,
-        confidence: polygon.confidence,
+        hourlyPredictions: polygon.hourlyPredictions,
         reasons: polygon.reasons,
         position: {
           lat: clickPosition.getLat(),
