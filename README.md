@@ -1,151 +1,137 @@
-# Konnect AI
+# 🛵 Konnect AI: 데이터 기반 배달 라이더 대시보드
 
-**Korea Connect** - AI를 활용해 한국의 거리를 효율적으로 연동하는 배달 플랫폼
+**"감에 의존하는 배달은 이제 그만! 데이터를 통해 스마트하게 일하고 더 많이 버세요."**
 
-라이더의 운행 데이터를 시각화하고 AI 기반 예측 정보를 제공하여, '감'이 아닌 '데이터'에 기반한 스마트한 운행을 지원하는 웹 애플리케이션입니다.
+Konnect AI는 배달 라이더를 위한 AI 기반 데이터 분석 및 운행 추천 플랫폼입니다. 실시간 수익 현황, AI가 예측하는 주문 밀집 지역(핫스팟), 상세한 수입 분석 데이터 등을 제공하여 라이더가 '데이터'에 기반한 최적의 의사결정을 내릴 수 있도록 돕습니다.
 
-## 🎯 프로젝트 목표
+<br/>
 
-- **Korea Connect**: AI 기술로 한국의 모든 거리를 스마트하게 연결
-- 라이더의 수익 증대와 업무 만족도 향상
-- 실시간 데이터 기반의 운행 의사결정 지원
-- AI 예측을 통한 효율적인 운행 구역 추천
+<p align="center">
+  <img src="./public/images/readme/main-dashboard.png" alt="메인 대시보드" width="100%"/>
+</p>
 
-## 🛠 기술 스택
+## ✨ 주요 기능 (Features)
 
-- **Frontend**: Next.js 15, React 19, TypeScript
-- **상태관리**: Zustand + React Query
-- **지도**: react-kakao-maps-sdk (카카오맵 API)
-- **UI/차트**: Tremor, Tailwind CSS, Lucide Icons
-- **날짜처리**: date-fns
-- **개발도구**: ESLint, TypeScript
+### 1. 한눈에 보는 메인 대시보드
 
-## 📅 날짜 설정 정보
+오늘의 성과(수입, 건수, 운행 시간)와 목표 달성률을 실시간으로 확인하고, AI가 추천하는 핫스팟과 시간대별 콜 예측 정보를 통해 다음 동선을 효율적으로 계획할 수 있습니다.
 
-### 개발 환경
+<img src="./public/images/readme/main-dashboard.png" alt="메인 대시보드" width="49%"/> <img src="./public/images/readme/ai-zone.png" alt="AI 추천 운행 존" width="49%"/>
 
-- **고정 날짜**: 2025년 7월 14일
-- **목적**: Mock 데이터와의 일관성 유지, 데모 시연 시 안정적인 데이터 표시
-- **설정 위치**: `app/utils/dateHelpers.ts`
+### 2. AI 추천 운행 존
 
-### 프로덕션 환경
+지도 위에서 실시간 주문 발생 현황(히트맵)과 AI가 예측한 미래의 주문 밀집 지역(폴리곤)을 시각적으로 확인하고, 최적의 운행 경로를 선택할 수 있습니다. 시간대별 예측 필터를 통해 전략적인 휴식과 운행 계획 수립이 가능합니다.
 
-- **실시간 날짜**: 실제 현재 날짜 사용
-- **자동 전환**: `NODE_ENV=production` 시 자동으로 실제 날짜로 변경
+### 3. 상세 수익 및 운행 이력 분석
 
-### 환경별 날짜 제어
+일별/주별/월별 수익 트렌드, 수익 구성(기본료, 프로모션, 팁) 등 다각적인 데이터 분석을 통해 자신의 수입 패턴을 정확히 파악하고 개선점을 찾을 수 있습니다. 모든 운행 내역은 상세 테이블로 제공됩니다.
 
-```typescript
-// 개발 환경: 2025-07-14 (고정)
-// 프로덕션: 실제 현재 날짜
-const currentDate = getCurrentDate();
+<img src="./public/images/readme/analytics.png" alt="수익 분석" width="49%"/> <img src="./public/images/readme/history.png" alt="운행 이력" width="49%"/>
 
-// 수동으로 데모 모드 제어 (환경변수)
-NEXT_PUBLIC_DEMO_MODE = true; // 강제로 데모 모드 활성화
+### 4. 사용자 친화적인 인증 및 설정
+
+안전한 이메일/비밀번호 기반 회원가입 및 로그인, 그리고 데모 계정 체험 기능을 제공합니다. 일일 목표 수익, 운행 관련 설정, 앱 테마 등 사용자 맞춤형 설정이 가능합니다.
+
+<img src="./public/images/readme/login.png" alt="로그인" width="49%"/> <img src="./public/images/readme/settings.png" alt="설정" width="49%"/>
+
+<img src="./public/images/readme/register.png" alt="회원가입" width="49%"/>
+
+## 🛠️ 기술 스택 (Tech Stack)
+
+| 구분                 | 기술                                                 |
+| -------------------- | ---------------------------------------------------- |
+| **Frontend**         | Next.js (v15), React (v19), TypeScript, Tailwind CSS |
+| **State Management** | React Query (v5), Zustand                            |
+| **UI & Charting**    | Tremor, Lucide Icons, tailwind-variants              |
+| **Form**             | React Hook Form, Zod                                 |
+| **Map**              | Kakao Maps API (`react-kakao-maps-sdk`)              |
+| **Backend**          | Next.js (App Router API Routes)                      |
+| **Database**         | PostgreSQL (Supabase)                                |
+| **ORM**              | Prisma                                               |
+| **Authentication**   | NextAuth.js (v5)                                     |
+| **Deployment**       | Vercel                                               |
+
+## 🏗️ 시스템 아키텍처
+
+```mermaid
+graph TD
+    subgraph "Client (Browser)"
+        A[Next.js / React] --> B{React Query & Zustand};
+        B --> C[대시보드 UI];
+        C --> D{Kakao Map API};
+    end
+
+    subgraph "Backend (Next.js Server)"
+        E[API Routes] --> F{NextAuth.js};
+        E --> G[Prisma ORM];
+    end
+
+    subgraph "Database"
+        H[(PostgreSQL)];
+    end
+
+    subgraph "External Services"
+        I[Kakao Maps];
+        J[Google Gemini];
+    end
+
+    A -- API 요청 --> E;
+    G --> H;
+    F -- 인증/세션 관리 --> H;
+    E -- AI 분석 요청 --> J;
+    D -- 지도 데이터 --> I;
+
+    style C fill:#D5E8D4,stroke:#82B366
+    style H fill:#DAE8FC,stroke:#6C8EBF
 ```
 
-## 🚀 시작하기
+## 📀 데이터베이스 스키마 (Prisma)
 
-### 설치
+프로젝트의 핵심 데이터 모델 구조입니다. `User`를 중심으로 `RiderProfile`, `Delivery` 등이 관계를 맺고 있으며, AI 추천 데이터를 위한 `AIZone`, `HeatmapPoint` 등의 모델을 설계했습니다.
 
-```bash
-npm install
-# 또는
-pnpm install
+<details>
+<summary><strong>Core Models (클릭하여 확인)</strong></summary>
+
+```prisma
+// /prisma/schema.prisma
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  password     String?
+  riderProfile RiderProfile?
+  // ...
+}
+
+model RiderProfile {
+  id           String     @id @default(cuid())
+  user         User       @relation(fields: [userId], references: [id])
+  dailyGoal    Int
+  deliveries   Delivery[]
+  userSettings UserSettings?
+  // ...
+}
+
+model Delivery {
+  id            String       @id @default(cuid())
+  riderProfile  RiderProfile @relation(fields: [riderId], references: [id])
+  completedAt   DateTime
+  totalEarnings Int
+  // ...
+}
+
+model AIZone {
+  id          String             @id @default(cuid())
+  name        String
+  predictions AIZonePrediction[]
+  // ...
+}
+
+model HeatmapPoint {
+  id        String   @id @default(cuid())
+  lat       Float
+  lng       Float
+  weight    Float
+  timestamp DateTime
+}
 ```
-
-### 개발 서버 실행
-
-```bash
-npm run dev
-# 또는
-pnpm dev
-```
-
-브라우저에서 [http://localhost:3000](http://localhost:3000)을 열어 확인하세요.
-
-### 빌드
-
-```bash
-npm run build
-npm start
-```
-
-## 📂 프로젝트 구조
-
-```
-app/
-├── api/              # Next.js API 라우트 (Mock 데이터)
-├── components/       # 재사용 가능한 컴포넌트들
-├── constants/        # 전역 상수들
-├── hooks/           # 커스텀 훅들 (React Query)
-├── providers/       # Provider 컴포넌트들
-├── store/           # Zustand 상태 관리
-├── types/           # TypeScript 타입 정의들
-└── utils/           # 유틸리티 함수들
-```
-
-## 🎨 주요 기능
-
-### 메인 대시보드
-
-- 오늘의 성과 요약
-- AI 추천 핫스팟 미니맵
-- 시간대별 콜 예측
-- 주요 공지사항
-
-### AI 추천 운행 존
-
-- 실시간 히트맵
-- AI 예측 폴리곤
-- 지도 인터랙션 (클릭, 필터)
-
-### 상세 수익 분석
-
-- 기간별 수익 트렌드
-- 수익 구성 분석 (기본료/프로모션/팁)
-- 요일별 평균 수익
-
-## 🔧 개발 설정
-
-### 환경변수
-
-```env
-# 카카오맵 API 키 (JavaScript Key) - 필수
-NEXT_PUBLIC_KAKAO_MAP_API_KEY=YOUR_KAKAO_MAP_API_KEY_HERE
-
-# 데모 모드 강제 활성화 (선택사항)
-NEXT_PUBLIC_DEMO_MODE=true
-
-# API 기본 URL (기본값: /api)
-NEXT_PUBLIC_API_BASE_URL=/api
-```
-
-> **참고**: `react-kakao-maps-sdk`를 사용하여 간편하고 안정적인 카카오맵 연동을 제공합니다.
-
-### 날짜 디버그 정보 확인
-
-개발 중 현재 사용되는 날짜 정보를 확인하려면:
-
-```typescript
-import { getDateInfo } from './app/utils/dateHelpers';
-console.log(getDateInfo());
-```
-
-## 📱 반응형 지원
-
-- **모바일**: 1열 레이아웃
-- **태블릿**: 2열 레이아웃
-- **데스크톱**: 2열 레이아웃
-
-## 🎭 데모 데이터
-
-모든 Mock 데이터는 2025년 7월 14일을 기준으로 작성되어 있습니다:
-
-- 배달 내역, 수익 데이터
-- AI 예측 정보
-- 공지사항 및 프로모션
-
-## 📄 라이선스
-
-이 프로젝트는 포트폴리오 목적으로 제작되었습니다.
